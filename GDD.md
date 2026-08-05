@@ -21,7 +21,7 @@ To provide an engaging, replayable interactive narrative experience while demons
 ## 2. Technology Stack
 *   **Language:** Python 3.10+
 *   **Frontend / UI:** Streamlit (Phase 1 Prototype) -> React (Phase 2 Potential Migration)
-*   **AI Integration:** `litellm` library connecting to Google Gemini or Groq
+*   **AI Integration:** `litellm` library connecting to Groq
 *   **Data Storage:** Local JSON files for static game data (`events.json`, `enemies.json`)
 *   **Security:** `python-dotenv` to manage API keys securely in a `.env` file, ensuring no keys are committed to source control.
 
