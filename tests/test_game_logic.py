@@ -6,7 +6,7 @@ def test_get_initial_game_state() -> None:
     state = game_logic.get_initial_game_state()
     assert state["day"] == 1
     assert state["resources"]["food"] == 10
-    assert len(state["survivors"]) == 1
+    assert len(state["survivors"]) > 0
 
 def test_has_sufficient_resources_success() -> None:
     """Tests resource validation logic when player has sufficient stock."""
@@ -109,3 +109,57 @@ def test_craft_item() -> None:
     failed_state = game_logic.craft_item(updated_state, {"wood": 10}, "Spear")
     assert failed_state["resources"]["wood"] == 2  # unchanged
     assert "Spear" not in failed_state.get("inventory", [])
+
+def test_consume_item_from_inventory() -> None:
+    """Tests that consuming an item removes it from inventory and applies appropriate effects."""
+    state = game_logic.get_initial_game_state()
+    state["inventory"] = ["Ration", "Medkit"]
+    
+    # Consume ration (adds 2 food)
+    updated = game_logic.consume_item_from_inventory(state, "Ration")
+    assert "Ration" not in updated["inventory"]
+    assert updated["resources"]["food"] == 12
+    
+    # Consume medkit (heals survivor)
+    updated["survivors"][0]["hp"] = 50
+    healed = game_logic.consume_item_from_inventory(updated, "Medkit")
+    assert "Medkit" not in healed["inventory"]
+    assert healed["survivors"][0]["hp"] == 80
+
+def test_check_any_survivor_alive() -> None:
+    """Tests game-over condition tracking based on survivor HP across all survivors."""
+    state = game_logic.get_initial_game_state()
+    
+    # Initially all survivors have 100 HP, so should be alive
+    assert game_logic.check_any_survivor_alive(state) is True
+    
+    # Set all survivors' HP to 0 (all dead)
+    for survivor in state["survivors"]:
+        survivor["hp"] = 0
+    assert game_logic.check_any_survivor_alive(state) is False
+
+def test_resolve_defense_check() -> None:
+    """Tests defense check resolution, applying damage when total combat power is insufficient."""
+    state = game_logic.get_initial_game_state()
+    # Force combat skills low to trigger defense failure
+    for survivor in state["survivors"]:
+        survivor["skills"]["combat"] = 1
+        survivor["hp"] = 100
+        
+    # Total combat power is 2. Raid difficulty 5 exceeds power -> should take damage
+    updated = game_logic.resolve_defense_check(state, raid_difficulty=5)
+    assert updated["survivors"][0]["hp"] == 80
+
+def test_assign_survivor_to_area() -> None:
+    """Tests that a survivor is correctly assigned to a specific area."""
+    state = game_logic.get_initial_game_state()
+    updated = game_logic.assign_survivor_to_area(state, "Alex", "Deep Jungle")
+    
+    alex = next(s for s in updated["survivors"] if s["name"] == "Alex")
+    assert alex["assigned_area"] == "Deep Jungle"
+
+def test_full_rest_survivor() -> None:
+    """Tests that resting fully restores a survivor's energy to 100."""
+    survivor = {"name": "Alex", "hp": 80, "energy": 20, "skills": {"scavenge": 5}, "assigned_area": "Idle"}
+    rested = game_logic.full_rest_survivor(survivor)
+    assert rested["energy"] == 100

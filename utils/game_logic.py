@@ -1,7 +1,7 @@
 import os
 
 def get_initial_game_state() -> dict:
-    """Initializes default resources, day tracker, and survivor state for a new game session.
+    """Initializes default resources, day tracker, and multiple survivor states for a new game session.
 
     Returns:
         dict: A dictionary containing the starting day, resources, and survivor attributes.
@@ -17,7 +17,15 @@ def get_initial_game_state() -> dict:
                 "name": "Alex",
                 "hp": 100,
                 "energy": 50,
-                "skills": {"scavenge": 5, "combat": 2}
+                "skills": {"scavenge": 5, "combat": 2},
+                "assigned_area": "Idle"
+            },
+            {
+                "name": "Bailey",
+                "hp": 100,
+                "energy": 50,
+                "skills": {"scavenge": 3, "combat": 4},
+                "assigned_area": "Idle"
             }
         ]
     }
@@ -176,3 +184,104 @@ def craft_item(state: dict, recipe_cost: dict, item_name: str) -> dict:
         updated_state["inventory"].append(item_name)
         
     return updated_state
+
+def consume_item_from_inventory(state: dict, item_name: str) -> dict:
+    """Removes an item from the inventory and applies its baseline survival effect.
+
+    Args:
+        state (dict): The current overall game state dictionary.
+        item_name (str): The name of the item to consume from inventory.
+
+    Returns:
+        dict: The updated game state dictionary.
+    """
+    updated_state = state.copy()
+    inventory = updated_state.get("inventory", [])
+    
+    if item_name in inventory:
+        inventory.remove(item_name)
+        updated_state["inventory"] = inventory
+        
+        # Apply item effects based on name
+        if item_name.lower() in ["ration", "food pack"]:
+            updated_state["resources"]["food"] = updated_state["resources"].get("food", 0) + 2
+        elif item_name.lower() in ["medkit", "bandage"]:
+            if updated_state.get("survivors"):
+                updated_state["survivors"][0] = add_survivor_hp(updated_state["survivors"][0], 30)
+                
+    return updated_state
+
+def check_any_survivor_alive(state: dict) -> bool:
+    """Checks whether at least one survivor in the game state still has greater than 0 HP.
+
+    Args:
+        state (dict): The current overall game state dictionary.
+
+    Returns:
+        bool: True if at least one survivor is alive, False if all survivors are dead.
+    """
+    survivors = state.get("survivors", [])
+    for survivor in survivors:
+        if survivor.get("hp", 0) > 0:
+            return True
+    return False
+
+def resolve_defense_check(state: dict, raid_difficulty: int) -> dict:
+    """Evaluates whether the camp's defense capability withstands a hostile raid, applying damage on failure.
+
+    Args:
+        state (dict): The current overall game state dictionary.
+        raid_difficulty (int): The target threshold required to successfully defend the camp.
+
+    Returns:
+        dict: The updated game state dictionary after resolving the defense check.
+    """
+    updated_state = state.copy()
+    
+    # Calculate total combat skill or defense power available from survivors
+    total_combat_power = sum(
+        survivor.get("skills", {}).get("combat", 0) 
+        for survivor in updated_state.get("survivors", [])
+        if survivor.get("hp", 0) > 0
+    )
+    
+    # Resolve success or failure
+    if total_combat_power < raid_difficulty:
+        # Defense failed: apply damage to the first active survivor
+        if updated_state.get("survivors"):
+            updated_state["survivors"][0] = consume_survivor_hp(
+                updated_state["survivors"][0], 
+                damage=20
+            )
+            
+    return updated_state
+
+def assign_survivor_to_area(state: dict, survivor_name: str, area_name: str) -> dict:
+    """Assigns a specific survivor to a designated exploration or work area.
+
+    Args:
+        state (dict): The current overall game state dictionary.
+        survivor_name (str): The name of the survivor being assigned.
+        area_name (str): The name of the area to assign them to.
+
+    Returns:
+        dict: The updated game state dictionary.
+    """
+    updated_state = state.copy()
+    for survivor in updated_state.get("survivors", []):
+        if survivor["name"] == survivor_name:
+            survivor["assigned_area"] = area_name
+    return updated_state
+
+def full_rest_survivor(survivor: dict) -> dict:
+    """Fully restores a survivor's energy to its maximum pool of 100.
+
+    Args:
+        survivor (dict): The survivor dictionary containing energy stats.
+
+    Returns:
+        dict: The updated survivor dictionary with maxed energy.
+    """
+    updated_survivor = survivor.copy()
+    updated_survivor["energy"] = 100
+    return updated_survivor
