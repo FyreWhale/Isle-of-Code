@@ -105,18 +105,27 @@ else:
             for i, survivor in enumerate(state["survivors"]):
                 col_a, col_b = st.columns([1, 2])
                 with col_a:
-                    st.markdown(f"**{survivor['name']}**")
-                    st.caption(f"HP: {survivor['hp']}/100")
+                    if survivor["hp"] <= 0:
+                        st.markdown(f"~~**{survivor['name']}**~~")
+                        st.caption("DECEASED")
+                    else:
+                        st.markdown(f"**{survivor['name']}**")
+                        st.caption(f"HP: {survivor['hp']}/100")
+
                 with col_b:
-                    current_area_index = available_areas.index(survivor["assigned_area"]) if survivor["assigned_area"] in available_areas else 0
-                    selected_area = st.selectbox(
-                        f"Assign to area:",
-                        options=available_areas,
-                        index=current_area_index,
-                        key=f"area_{i}",
-                        label_visibility="collapsed",
-                        format_func=lambda x: areas_data[x].get("name", x) if x in areas_data else x
-                    )
+                    if survivor["hp"] <= 0:
+                        st.error("This survivor has fallen.")
+                        selected_area = "Dead"
+                    else:
+                        current_area_index = available_areas.index(survivor["assigned_area"]) if survivor["assigned_area"] in available_areas else 0
+                        selected_area = st.selectbox(
+                            f"Assign to area:",
+                            options=available_areas,
+                            index=current_area_index,
+                            key=f"area_{i}",
+                            label_visibility="collapsed",
+                            format_func=lambda x: areas_data[x].get("name", x) if x in areas_data else x
+                        )
                 
                 updated_survivor = survivor.copy()
                 updated_survivor["assigned_area"] = selected_area
@@ -143,7 +152,7 @@ else:
                 narrative_summaries.append(f"**🌟 Event: {event_outcome.get('event_title', 'Update')}**\n> {event_outcome.get('narrative', '')}{e_stat_str}")
                 
                 # --- 2. Resolve Survivor Actions ---
-                for survivor in state["survivors"]:
+                for survivor in living_survivors:
                     area_name = survivor["assigned_area"]
                     
                     if area_name == "Camp (Rest)":
@@ -199,7 +208,7 @@ else:
         # --- TAB 2: CUSTOM ACTION ---
         with tab_custom:
             st.caption("Type a free-form action for the survivors.")
-            custom_action_input = st.text_input("What do you want the survivors to do?", placeholder="e.g., Search the beach for wreckage")
+            custom_action_input = st.text_input("What do you want the survivors to do?", placeholder="e.g., Build a signal flare")
 
             if st.button("Execute Custom Action", use_container_width=True):
                 if custom_action_input:
@@ -216,11 +225,13 @@ else:
                             outcome = llm_engine.resolve_custom_action(
                                 survivor["name"],
                                 survivor.get("trait", "A standard survivor."),
-                                custom_action_input
+                                custom_action_input,
+                                scenario_data
                             )
                             
                             # Apply the generated math
-                            res_gained = outcome.get("resources_gained", {})
+                            raw_res_gained = outcome.get("resources_gained", {})
+                            res_gained = {res: min(max(amt, -10), 10) for res, amt in raw_res_gained.items()}
                             hp_change = outcome.get("hp_change", 0)
                             
                             new_resources = game_logic.add_resources(new_resources, res_gained)
@@ -261,8 +272,11 @@ else:
                         
                         # Combine all individual narratives with a separator
                         daily_log = "\n\n---\n\n".join(narrative_summaries)
+
+                        clean_action = outcome.get("interpreted_action", custom_action_input.capitalize())
+                        action_header = f"🎯 **Objective:** *\"{clean_action}\"*"
                         
-                        st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n**Custom Action Attempt:** *'{custom_action_input}'*\n\n---\n\n{daily_log}")
+                        st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n{action_header}\n\n---\n\n{daily_log}")
                         st.rerun()
                     else:
                         st.warning("There are no conscious survivors left to perform this action!")

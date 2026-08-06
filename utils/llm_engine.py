@@ -143,13 +143,14 @@ def generate_daily_event(day: int, scenario_data: dict, living_survivors: list) 
         print(f"Event Error: {e}")
         return fallback
 
-def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: str) -> dict:
+def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: str, scenario_data: dict) -> dict:
     """Generates a dynamic outcome based on a player's free-form custom action.
     
     Args:
         survivor_name (str): The name of the survivor performing the action.
         survivor_trait (str): The personality trait of the survivor affecting action outcomes.
         action_text (str): The free-form text describing the player's custom action.
+        scenario_data (dict): Data about the current scenario.
 
     Returns:
         dict: A structured dictionary containing narrative, resources_gained, and hp_change.
@@ -159,8 +160,12 @@ def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: 
     if not os.getenv("GROQ_API_KEY") and not os.getenv("GEMINI_API_KEY"): 
         return fallback
 
-    # Pass the survivor details AND the player's custom text
-    context = f"Survivor: {survivor_name}\nPersonality Trait: {survivor_trait}\nCustom Action Attempted: {action_text}"
+    context = (
+        f"Scenario Theme: {scenario_data.get('name', 'Unknown')} - {scenario_data.get('description', '')}\n"
+        f"Survivor: {survivor_name}\n"
+        f"Personality Trait: {survivor_trait}\n"
+        f"Custom Action Attempted: {action_text}"
+    )
 
     try:
         response = completion(
