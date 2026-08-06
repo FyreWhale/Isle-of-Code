@@ -150,3 +150,29 @@ def advance_day(state: dict) -> dict:
     updated_state = state.copy()
     updated_state["day"] += 1
     return updated_state
+
+def craft_item(state: dict, recipe_cost: dict, item_name: str) -> dict:
+    """Validates and executes the crafting of an item, consuming resources and updating inventory.
+
+    Args:
+        state (dict): The current overall game state dictionary.
+        recipe_cost (dict): The resource cost required to craft the item.
+        item_name (str): The name of the item being crafted.
+
+    Returns:
+        dict: The updated game state dictionary.
+    """
+    updated_state = state.copy()
+    current_resources = updated_state.get("resources", {})
+    
+    # Check if sufficient resources exist using our existing helper
+    if has_sufficient_resources(current_resources, recipe_cost):
+        # Consume the resources
+        updated_state["resources"] = consume_resources(current_resources, recipe_cost)
+        
+        # Add item to inventory (initialize inventory list if not present)
+        if "inventory" not in updated_state:
+            updated_state["inventory"] = []
+        updated_state["inventory"].append(item_name)
+        
+    return updated_state

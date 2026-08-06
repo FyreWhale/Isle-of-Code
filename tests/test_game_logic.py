@@ -94,3 +94,18 @@ def test_advance_day() -> None:
     
     advanced_state = game_logic.advance_day(state)
     assert advanced_state["day"] == 2
+
+def test_craft_item() -> None:
+    """Tests that crafting an item correctly deducts resources and updates inventory."""
+    state = game_logic.get_initial_game_state()
+    # Initial state has {"food": 10, "wood": 5}
+    recipe = {"wood": 3}
+    
+    updated_state = game_logic.craft_item(state, recipe, "Campfire")
+    assert updated_state["resources"]["wood"] == 2
+    assert "Campfire" in updated_state["inventory"]
+    
+    # Test failed craft due to insufficient resources
+    failed_state = game_logic.craft_item(updated_state, {"wood": 10}, "Spear")
+    assert failed_state["resources"]["wood"] == 2  # unchanged
+    assert "Spear" not in failed_state.get("inventory", [])
