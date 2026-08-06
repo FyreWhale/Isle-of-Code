@@ -21,3 +21,18 @@ def get_initial_game_state() -> dict:
             }
         ]
     }
+
+def has_sufficient_resources(current_resources: dict, cost: dict) -> bool:
+    """Validates whether current resource stock meets a required cost dictionary.
+
+    Args:
+        current_resources (dict): The player's available resources.
+        cost (dict): The required resources for the action.
+
+    Returns:
+        bool: True if sufficient resources are available, False otherwise.
+    """
+    for resource, required_amount in cost.items():
+        if current_resources.get(resource, 0) < required_amount:
+            return False
+    return True
