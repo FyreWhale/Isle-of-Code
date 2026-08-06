@@ -26,5 +26,8 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run tests with Pytest
+        env:
+          PYTHONPATH: .
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          pytest
+          python -m pytest
