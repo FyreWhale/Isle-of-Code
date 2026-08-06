@@ -117,6 +117,8 @@ def generate_daily_event(day: int, scenario_data: dict, living_survivors: list) 
     )[0]
 
     specific_theme = random.choice(scenario_events[selected_tone])
+    print(f"\n[DEBUG] Scenario Name: {scenario_data.get('name', 'MISSING_NAME')}")
+    print(f"[DEBUG] Chosen Theme: {specific_theme}\n")
 
     # Format survivor details for the prompt context
     survivor_details = "\n".join([f"- Name: {s['name']}, Trait: {s.get('trait', 'A survivor')}" for s in living_survivors])
