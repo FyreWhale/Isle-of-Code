@@ -1,5 +1,6 @@
 import os
 import json
+import random
 from litellm import completion
 from dotenv import load_dotenv
 import utils.prompts as prompts
@@ -107,14 +108,14 @@ def parse_custom_action_intent(user_input: str) -> dict:
         # Fallback dictionary to prevent application crashes on parse errors
         return {"action_type": "unknown", "target_resource": "none", "estimated_risk": "low"}
 
-def resolve_dynamic_exploration(survivor_name: str, area_data: dict) -> dict:
-    """Generates a dynamic exploration outcome based on JSON area data."""
+def resolve_dynamic_exploration(survivor_name: str, survivor_trait: str, area_data: dict) -> dict:
+    """Generates a dynamic exploration outcome based on JSON area data and survivor personality."""
     api_key = os.getenv("GROQ_API_KEY")
-    fallback = {"narrative": f"{survivor_name} found nothing.", "resources_gained": {}, "hp_change": 0}
+    fallback = {"narrative": f"I found nothing.", "resources_gained": {}, "hp_change": 0}
     
     if not api_key: return fallback
 
-    context = f"Survivor: {survivor_name}. Area Data: {json.dumps(area_data)}"
+    context = f"Survivor: {survivor_name}\nPersonality Trait: {survivor_trait}\nArea Data: {json.dumps(area_data)}"
 
     try:
         response = completion(
@@ -134,13 +135,31 @@ def resolve_dynamic_exploration(survivor_name: str, area_data: dict) -> dict:
         return fallback
 
 def generate_daily_event(day: int, scenario_data: dict) -> dict:
-    """Generates a random morning event based on the scenario JSON."""
+    """Generates a random morning event based on the scenario JSON and a weighted tone."""
     api_key = os.getenv("GROQ_API_KEY")
     fallback = {"event_title": "A Quiet Morning", "narrative": "Nothing unusual happens today.", "camp_resource_change": {}}
     
     if not api_key: return fallback
 
-    context = f"Day: {day}. Scenario Data: {json.dumps(scenario_data)}"
+    # 1. Safely extract the events dictionary from the scenario data
+    scenario_events = scenario_data.get("events", {
+        "Positive": ["A good day"],
+        "Negative": ["A bad day"],
+        "Neutral": ["A normal day"]
+    })
+
+    # 2. Pick the overarching tone
+    selected_tone = random.choices(
+        population=["Positive", "Negative", "Neutral"],
+        weights=[35, 30, 35],
+        k=1
+    )[0]
+
+    # 3. Pick the EXACT theme from the JSON arrays
+    specific_theme = random.choice(scenario_events[selected_tone])
+
+    # 4. Inject the scenario name, description, and specific theme into the context
+    context = f"Day: {day}. Scenario Theme: {scenario_data.get('name', 'Island')} ({scenario_data.get('description', '')}). Today's Forced Tone: {selected_tone}. Specific Topic: {specific_theme}."
 
     try:
         response = completion(

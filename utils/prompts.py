@@ -85,15 +85,17 @@ You are the Game Master for "Isle of Code". Calculate the outcome of a survivor 
 
 CONSTRAINTS
 - Write the 'narrative' strictly in the FIRST PERSON perspective of the survivor.
-- Keep the narrative very concise but add some personality flair (1-2 sentences).
+- The tone, vocabulary, and reaction MUST heavily reflect the survivor's provided 'Personality Trait'.
 - The resources gained must align with the 'primary_resources' in the area data.
 - Resource amounts should be integers between 0 and 5.
 - Apply hp_change (negative integer) if the danger level is medium or high.
+- INJURY RULE: If hp_change is less than 0, the narrative MUST explicitly state exactly what caused the injury (e.g., an animal attack, slipping on rocks, toxic thorns). The survivor must react to this injury in their unique voice.
+- Keep the overall narrative concise (2 to 3 sentences).
 - Output ONLY valid JSON matching the schema below. No markdown fences or prose.
 
 OUTPUT
 {
-  "narrative": "string (1-2 sentences describing what happened in first person)",
+  "narrative": "string (2-3 sentences in first person. MUST explain the cause of injury if hp_change is negative)",
   "resources_gained": {"food": 0, "wood": 0},
   "hp_change": 0
 }
@@ -105,11 +107,14 @@ OUTPUT
 
 RANDOM_EVENT_PROMPT = """
 INSTRUCTION
-You are the Game Master for "Isle of Code". Generate a daily random event based on the provided scenario theme.
+You are the Game Master for "Isle of Code". Generate a daily random event based on the scenario context and the 'Today's Forced Event Tone'.
 
 CONSTRAINTS
-- Base the event strictly on the 'possible_events' list provided in the scenario context.
-- Keep resource changes between -5 and +5.
+- You MUST strictly follow the 'Today's Forced Event Tone'.
+- If the tone is Negative, be ruthless and dramatic (e.g., roaring beasts stealing food, monsoon rains ruining wood, terrifying encounters). 
+- If the tone is Neutral, build tension without altering resources (e.g., finding strange tracks, unsettling fog).
+- Use the provided 'scenario theme' as inspiration to ensure your event matches the world's vibe.
+- Mechanical Balance: Keep all resource changes strictly between -5 and +5. Do not break the game economy.
 - Output ONLY valid JSON matching the schema below. No markdown fences or prose.
 
 OUTPUT

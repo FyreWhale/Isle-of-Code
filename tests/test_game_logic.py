@@ -36,26 +36,6 @@ def test_add_resources() -> None:
     assert updated["food"] == 9
     assert updated["wood"] == 5
 
-def test_consume_survivor_energy() -> None:
-    """Tests that survivor energy is correctly deducted without dropping below zero."""
-    survivor = {"name": "Alex", "hp": 100, "energy": 50, "skills": {"scavenge": 5}}
-    updated = game_logic.consume_survivor_energy(survivor, 20)
-    assert updated["energy"] == 30
-    
-    # Test boundary condition (energy shouldn't go negative)
-    exhausted = game_logic.consume_survivor_energy(updated, 50)
-    assert exhausted["energy"] == 0
-
-def test_add_survivor_energy() -> None:
-    """Tests that survivor energy is correctly increased without exceeding maximum limit."""
-    survivor = {"name": "Alex", "hp": 100, "energy": 40, "skills": {"scavenge": 5}}
-    updated = game_logic.add_survivor_energy(survivor, 30)
-    assert updated["energy"] == 70
-    
-    # Test boundary condition (Energy shouldn't exceed 100)
-    maxed = game_logic.add_survivor_energy(updated, 50)
-    assert maxed["energy"] == 100
-
 def test_consume_survivor_hp() -> None:
     """Tests that survivor HP is correctly deducted without dropping below zero."""
     survivor = {"name": "Alex", "hp": 100, "energy": 50, "skills": {"scavenge": 5}}
@@ -159,7 +139,13 @@ def test_assign_survivor_to_area() -> None:
     assert alex["assigned_area"] == "Deep Jungle"
 
 def test_full_rest_survivor() -> None:
-    """Tests that resting fully restores a survivor's energy to 100."""
-    survivor = {"name": "Alex", "hp": 80, "energy": 20, "skills": {"scavenge": 5}, "assigned_area": "Idle"}
-    rested = game_logic.full_rest_survivor(survivor)
-    assert rested["energy"] == 100
+    """Tests that a survivor recovers 20 HP without exceeding maximum HP when resting."""
+    state = game_logic.get_initial_game_state()
+    survivor = state["survivors"][0]
+    survivor["hp"] = 70  # Set HP below max
+
+    updated = game_logic.full_rest_survivor(survivor)
+    assert updated["hp"] == 90  # Should recover 20 HP
+    
+    updated = game_logic.full_rest_survivor(updated)
+    assert updated["hp"] == 100  # Should not exceed max HP

@@ -46,11 +46,14 @@ with col_day:
     st.metric("☀️ Current Day", state['day'])
 
 st.subheader("📦 Camp Resources")
-# Dynamically create columns based on how many resource types exist
-res_keys = list(state["resources"].keys())
-res_cols = st.columns(max(len(res_keys), 4)) # Ensure at least 4 columns for spacing
-for i, (res, amount) in enumerate(state["resources"].items()):
-    res_cols[i].metric(label=res.capitalize(), value=amount)
+res_items = list(state["resources"].items())
+
+# Create wrapping rows of 4 columns to support infinite resource types
+cols_per_row = 4
+for i in range(0, len(res_items), cols_per_row):
+    row_cols = st.columns(cols_per_row)
+    for j, (res, amount) in enumerate(res_items[i:i+cols_per_row]):
+        row_cols[j].metric(label=res.capitalize(), value=amount)
 
 st.divider()
 
@@ -76,7 +79,7 @@ with left_col:
             col_a, col_b = st.columns([1, 2])
             with col_a:
                 st.markdown(f"**{survivor['name']}**")
-                st.caption(f"Energy: {survivor['energy']}/100 | HP: {survivor['hp']}/100")
+                st.caption(f"HP: {survivor['hp']}/100")
             with col_b:
                 current_area_index = available_areas.index(survivor["assigned_area"]) if survivor["assigned_area"] in available_areas else 0
                 selected_area = st.selectbox(
@@ -106,7 +109,7 @@ with left_col:
             
             # Build stat tags for the event (e.g., [+5 food])
             e_stats = [f"+{amt} {res}" if amt > 0 else f"{amt} {res}" for res, amt in event_res.items() if amt != 0]
-            e_stat_str = f" `[{', '.join(e_stats)}]`" if e_stats else ""
+            e_stat_str = f"\n\n`[{', '.join(e_stats)}]`" if e_stats else ""
             
             # Use blockquotes (>) to make the event stand out from the survivor logs
             narrative_summaries.append(f"**🌟 Event: {event_outcome.get('event_title', 'Update')}**\n> {event_outcome.get('narrative', '')}{e_stat_str}")
@@ -117,41 +120,51 @@ with left_col:
                 
                 if area_name == "Camp (Rest)":
                     survivor.update(game_logic.full_rest_survivor(survivor))
-                    narrative_summaries.append(f"**{survivor['name']}**: \"I rested at camp and fully recovered my energy.\" `[+Energy]`")
+                    narrative_summaries.append(f"**{survivor['name']}**: \"I rested at camp and recovered some health.\" `[+20 HP]`")
                 
                 elif area_name in areas_data:
-                    if survivor["energy"] >= 15:
-                        survivor = game_logic.consume_survivor_energy(survivor, 15)
-                        outcome = llm_engine.resolve_dynamic_exploration(survivor["name"], areas_data[area_name])
+                    # Energy checks are gone. They just explore!
+                    outcome = llm_engine.resolve_dynamic_exploration(
+                        survivor["name"], 
+                        survivor.get("trait", "A standard survivor."), 
+                        areas_data[area_name]
+                    )
+                    
+                    res_gained = outcome.get("resources_gained", {})
+                    hp_change = outcome.get("hp_change", 0)
+                    
+                    new_resources = game_logic.add_resources(new_resources, res_gained)
+                    if hp_change < 0:
+                        survivor = game_logic.consume_survivor_hp(survivor, abs(hp_change))
                         
-                        # Apply resources
-                        res_gained = outcome.get("resources_gained", {})
-                        hp_change = outcome.get("hp_change", 0)
+                    s_stats = [f"+{amt} {res}" for res, amt in res_gained.items() if amt > 0]
+                    if hp_change < 0:
+                        s_stats.append(f"{hp_change} HP")
                         
-                        new_resources = game_logic.add_resources(new_resources, res_gained)
-                        if hp_change < 0:
-                            survivor = game_logic.consume_survivor_hp(survivor, abs(hp_change))
-                            
-                        # Build stat tags for the survivor (e.g., [+2 wood, -5 HP])
-                        s_stats = [f"+{amt} {res}" for res, amt in res_gained.items() if amt > 0]
-                        if hp_change < 0:
-                            s_stats.append(f"{hp_change} HP")
-                            
-                        s_stat_str = f" `[{', '.join(s_stats)}]`" if s_stats else ""
-                        
-                        # Format as First-Person quote with tags
-                        narrative_summaries.append(f"**{survivor['name']}**: \"{outcome.get('narrative', f'I explored {area_name}.')}\"{s_stat_str}")
-                    else:
-                        narrative_summaries.append(f"**{survivor['name']}**: \"I was too exhausted to explore {area_name}.\"")
+                    s_stat_str = f"\n\n`[{', '.join(s_stats)}]`" if s_stats else ""
+                    narrative_summaries.append(f"**{survivor['name']}**: \"{outcome.get('narrative', f'I explored {area_name}.')}\"{s_stat_str}")
                 else:
                     narrative_summaries.append(f"**{survivor['name']}**: \"I remained idle at camp today.\"")
 
-            # --- 3. Update State & Log ---
+            # --- 3. Daily Food Consumption (Starvation Mechanic) ---
+            living_survivors = [s for s in state["survivors"] if s["hp"] > 0]
+            food_needed = len(living_survivors)
+            
+            if new_resources.get("food", 0) >= food_needed:
+                new_resources["food"] -= food_needed
+                narrative_summaries.append(f"**Camp Logistics**: The group ate their daily rations. \n\n`[-{food_needed} food]`")
+            else:
+                new_resources["food"] = 0
+                for survivor in living_survivors:
+                    survivor = game_logic.consume_survivor_hp(survivor, 15) # Starvation penalty
+                narrative_summaries.append(f"**⚠️ STARVATION**: There was not enough food! Everyone goes hungry and grows weaker. \n\n`[-15 HP to all]`")
+
+            # --- 4. Update State & Log ---
             state["resources"] = new_resources
             state = game_logic.advance_day(state)
             st.session_state.game_state = state
             
-            daily_log = "\n\n".join(narrative_summaries)
+            daily_log = "\n\n---\n\n".join(narrative_summaries)
             st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n{daily_log}")
             st.rerun()
 
@@ -164,9 +177,8 @@ with left_col:
             if custom_action_input:
                 intent = llm_engine.parse_custom_action_intent(custom_action_input)
                 active_survivor = next((s for s in state["survivors"] if s["hp"] > 0), None)
-                
-                if active_survivor and active_survivor["energy"] >= 10:
-                    updated_survivor = game_logic.consume_survivor_energy(active_survivor, 10)
+
+                if active_survivor:
                     for i, s in enumerate(state["survivors"]):
                         if s["name"] == updated_survivor["name"]:
                             state["survivors"][i] = updated_survivor

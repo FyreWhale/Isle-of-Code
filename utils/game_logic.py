@@ -1,11 +1,6 @@
 import os
 
 def get_initial_game_state() -> dict:
-    """Initializes default resources, day tracker, and multiple survivor states for a new game session.
-
-    Returns:
-        dict: A dictionary containing the starting day, resources, and survivor attributes.
-    """
     return {
         "day": 1,
         "resources": {
@@ -16,18 +11,19 @@ def get_initial_game_state() -> dict:
             {
                 "name": "Alex",
                 "hp": 100,
-                "energy": 50,
                 "skills": {"scavenge": 5, "combat": 2},
+                "trait": "Grumpy, cynical, and complains about everything. Uses short, blunt sentences.",
                 "assigned_area": "Idle"
             },
             {
                 "name": "Bailey",
                 "hp": 100,
-                "energy": 50,
                 "skills": {"scavenge": 3, "combat": 4},
+                "trait": "Highly optimistic, naive, and easily distracted by nature. Very enthusiastic.",
                 "assigned_area": "Idle"
             }
-        ]
+        ],
+        "inventory": []
     }
 
 def has_sufficient_resources(current_resources: dict, cost: dict) -> bool:
@@ -75,34 +71,6 @@ def add_resources(current_resources:dict, earned: dict) -> dict:
     for resource, amount in earned.items():
         updated_resources[resource] = updated_resources.get(resource, 0) + amount
     return updated_resources
-
-def consume_survivor_energy(survivor: dict, energy_cost: int) -> dict:
-    """Deducts energy cost from a survivor's current pool, ensuring it does not drop below zero.
-
-    Args:
-        survivor (dict): The survivor dictionary containing energy stats.
-        energy_cost (int): The amount of energy to subtract.
-
-    Returns:
-        dict: The updated survivor dictionary.
-    """
-    updated_survivor = survivor.copy()
-    updated_survivor["energy"] = max(0, updated_survivor["energy"] - energy_cost)
-    return updated_survivor
-
-def add_survivor_energy(survivor: dict, energy_gain: int) -> dict:
-    """Adds energy to a survivor's current pool, capping it at a maximum of 100.
-
-    Args:
-        survivor (dict): The survivor dictionary containing energy stats.
-        energy_gain (int): The amount of energy to add.
-
-    Returns:
-        dict: The updated survivor dictionary.
-    """
-    updated_survivor = survivor.copy()
-    updated_survivor["energy"] = min(100, updated_survivor["energy"] + energy_gain)
-    return updated_survivor
 
 def consume_survivor_hp(survivor: dict, damage: int) -> dict:
     """Deducts damage from a survivor's current HP pool, ensuring it does not drop below zero.
@@ -274,14 +242,15 @@ def assign_survivor_to_area(state: dict, survivor_name: str, area_name: str) -> 
     return updated_state
 
 def full_rest_survivor(survivor: dict) -> dict:
-    """Fully restores a survivor's energy to its maximum pool of 100.
-
+    """Restores a survivor's HP when they rest at camp.
+    
     Args:
-        survivor (dict): The survivor dictionary containing energy stats.
+        survivor (dict): The survivor dictionary containing HP stats.
 
     Returns:
-        dict: The updated survivor dictionary with maxed energy.
+        dict: The updated survivor dictionary with restored HP.
     """
     updated_survivor = survivor.copy()
-    updated_survivor["energy"] = 100
+    # Cap HP at 100
+    updated_survivor["hp"] = min(100, updated_survivor["hp"] + 20)
     return updated_survivor

@@ -2,6 +2,25 @@
   "lost_island": {
     "name": "Lost Island",
     "description": "A remote, uncharted tropical island with remnants of a forgotten civilization.",
-    "possible_events": ["plane_flyover", "tropical_storm", "washed_up_cargo"]
+    "events": {
+      "Positive": [
+        "Bountiful tropical fruit gathering", 
+        "Beautiful sunny weather", 
+        "Washed up cargo from a shipwreck", 
+        "Finding an abandoned pirate stash"
+      ],
+      "Negative": [
+        "A wild animal attack", 
+        "A severe weather event", 
+        "Food spoiling from the extreme jungle humidity", 
+        "Toxic flora causing sickness"
+      ],
+      "Neutral": [
+        "Eerie unsettling silence in the jungle", 
+        "Distant terrifying roars", 
+        "Mysterious giant footprints found on the beach", 
+        "Spotting a plane that flies over without seeing you"
+      ]
+    }
   }
 }
