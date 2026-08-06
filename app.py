@@ -187,11 +187,12 @@ else:
                 
                 # Apply the generated math
                 raw_res_gained = outcome.get("resources_gained", {})
-                res_gained = {res: min(max(amt, -10), 10) for res, amt in raw_res_gained.items()}
+                res_gained = {res: min(max(amt, -5), 4) for res, amt in raw_res_gained.items()}
                 for res, amt in res_gained.items():
                     new_resources[res] = max(0, new_resources.get(res, 0) + amt)
                 
-                hp_change = outcome.get("hp_change", 0)
+                raw_hp_change = outcome.get("hp_change", 0)
+                hp_change = min(max(raw_hp_change, -10), 0)
                 if hp_change < 0:
                     for active_survivor in living_survivors:
                         for i, s in enumerate(state["survivors"]):
@@ -203,7 +204,7 @@ else:
                 e_stats = [f"+{amt} {res}" if amt > 0 else f"{amt} {res}" for res, amt in res_gained.items() if amt != 0]
                 if hp_change < 0:
                     e_stats.append(f"{hp_change} HP")
-                    
+
                 e_stat_str = f"\n\n`[{', '.join(e_stats)}]`" if e_stats else ""
                 
                 # Use blockquotes (>) to make the event stand out from the survivor logs
