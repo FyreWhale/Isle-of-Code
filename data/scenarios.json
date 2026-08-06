@@ -7,19 +7,49 @@
         "Bountiful tropical fruit gathering", 
         "Beautiful sunny weather", 
         "Washed up cargo from a shipwreck", 
-        "Finding an abandoned pirate stash"
+        "Finding an abandoned pirate stash",
+        "A flock of easily huntable birds lands nearby",
+        "Finding a pristine freshwater spring"
       ],
       "Negative": [
         "A wild animal attack", 
         "A severe weather event", 
         "Food spoiling from the extreme jungle humidity", 
-        "Toxic flora causing sickness"
+        "Toxic flora causing sickness",
+        "A swarm of aggressive hornets invading the camp",
+        "A flash flood washing away some supplies"
       ],
       "Neutral": [
         "Eerie unsettling silence in the jungle", 
         "Distant terrifying roars", 
         "Mysterious giant footprints found on the beach", 
-        "Spotting a plane that flies over without seeing you"
+        "Spotting a plane that flies over without seeing you",
+        "Strange, glowing moss blooming on the trees",
+        "An unusually thick, blinding fog rolls in"
+      ]
+    }
+  },
+  "xeno_planet": {
+    "name": "Xeno-73 Outpost",
+    "description": "A hostile, crimson-skied alien planet with bizarre flora and hostile insectoid life.",
+    "events": {
+      "Positive": [
+        "Discovering a crashed supply pod",
+        "A period of optimal solar charging weather",
+        "Harvesting edible bioluminescent fungi",
+        "Finding a cluster of high-grade scrap metal"
+      ],
+      "Negative": [
+        "An acid rain storm forcing everyone indoors",
+        "A breach in the camp perimeter by alien predators",
+        "Toxic atmospheric venting causing sickness",
+        "A localized EMP destroying some gathered data"
+      ],
+      "Neutral": [
+        "A strange, localized gravity anomaly",
+        "Unidentified radio static on the comms channel",
+        "Watching a massive, silent creature migrate in the distance",
+        "Eerie, melodic humming coming from the crystal formations"
       ]
     }
   }

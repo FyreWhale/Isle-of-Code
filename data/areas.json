@@ -1,7 +1,27 @@
 {
+  "windswept_beach": {
+    "name": "Windswept Beach",
+    "primary_resources": ["food"],
+    "danger_level": "low"
+  },
   "deep_jungle": {
     "name": "Deep Jungle",
-    "primary_resources": ["wood", "herbs"],
+    "primary_resources": ["wood", "food"],
     "danger_level": "medium"
+  },
+  "shipwreck_cove": {
+    "name": "Shipwreck Cove",
+    "primary_resources": ["metal", "wood"],
+    "danger_level": "medium"
+  },
+  "ancient_ruins": {
+    "name": "Crumbling Ruins",
+    "primary_resources": ["metal", "herbs"],
+    "danger_level": "high"
+  },
+  "dark_cave": {
+    "name": "Echoing Cave System",
+    "primary_resources": ["metal"],
+    "danger_level": "high"
   }
 }

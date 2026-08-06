@@ -1,5 +1,25 @@
 {
-  "Campfire": {"wood": 3},
-  "Spear": {"wood": 2},
-  "Distress Beacon": {"wood": 10,"food": 5}
+  "Campfire": {
+    "wood": 3
+  },
+  "Spear": {
+    "wood": 2,
+    "metal": 1
+  },
+  "Sturdy Shelter": {
+    "wood": 15
+  },
+  "Water Purifier": {
+    "wood": 3,
+    "metal": 2
+  },
+  "Herbal Salve": {
+    "herbs": 5,
+    "food": 1
+  },
+  "Distress Beacon": {
+    "wood": 10,
+    "metal": 10,
+    "food": 5
+  }
 }
