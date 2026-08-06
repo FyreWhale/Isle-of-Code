@@ -7,6 +7,7 @@ def load_json_file(filepath: str) -> dict:
         with open(filepath, 'r') as file:
             return json.load(file)
     except FileNotFoundError:
+        print(f"Warning: {filepath} not found. Returning empty dictionary.")
         return {}
 
 def get_all_game_data() -> dict:
