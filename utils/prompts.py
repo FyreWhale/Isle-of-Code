@@ -81,6 +81,8 @@ CONSTRAINTS
 - SINGLE SURVIVOR RULE: If ONLY ONE survivor is listed in the context, write the narrative strictly focusing on that single survivor dealing with the event alone in solitude.
 - DO NOT address the player as "you". 
 - You MUST strictly follow the 'Today's Forced Event Tone' and 'Specific Topic' provided.
+- Apply hp_change (negative integer) if 'Today's Forced Event Tone' is Negative or 'Specific Topic' is deemed dangerous.
+- INJURY RULE: If hp_change is less than 0, the narrative MUST explicitly state what caused the injury.
 - Keep the narrative concise (2-3 sentences).
 - Output ONLY valid JSON matching the schema below. No markdown fences or prose.
 
@@ -88,7 +90,8 @@ OUTPUT
 {
   "event_title": "string",
   "narrative": "string (2-3 sentences featuring the named survivors reacting to the event)",
-  "camp_resource_change": {"food": 0, "wood": 0}
+  "resources_gained": {"food": 0, "wood": 0},
+  "hp_change": 0
 }
 """
 

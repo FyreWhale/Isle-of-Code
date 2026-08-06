@@ -59,6 +59,18 @@ for i in range(0, len(res_items), cols_per_row):
     for j, (res, amount) in enumerate(res_items[i:i+cols_per_row]):
         row_cols[j].metric(label=res.capitalize(), value=amount)
 
+st.write("")
+
+living_survivors = [s for s in state["survivors"] if s.get("hp", 0) > 0]
+food_needed = len(living_survivors)
+current_food = state["resources"].get("food", 0)
+
+if food_needed > 0:
+    if current_food < food_needed:
+        st.warning(f"⚠️ **STARVATION RISK:** The camp requires **{food_needed} Food** to survive the night, but only has **{current_food}**. Active survivors will lose 15 HP if you proceed!")
+    else:
+        st.info(f"🍲 **Daily Upkeep:** Your camp will consume **{food_needed} Food** at the end of this day.")
+
 st.divider()
 
 # ==========================================
@@ -137,13 +149,21 @@ else:
                         continue
                     else:
                         current_area_index = available_areas.index(survivor["assigned_area"]) if survivor["assigned_area"] in available_areas else 0
+
+                        def format_area_label(area_key):
+                            if area_key in areas_data:
+                                res_list = areas_data[area_key].get("primary_resources", [])
+                                res_str = ", ".join(res_list).title()
+                                return f"{areas_data[area_key].get('name', area_key)} (Loot: {res_str})"
+                            return area_key
+                        
                         selected_area = st.selectbox(
                             "Assign task:",
                             options=available_areas,
                             index=current_area_index,
                             key=f"area_{i}",
                             label_visibility="collapsed",
-                            format_func=lambda x: areas_data[x].get("name", x) if x in areas_data else x
+                            format_func=format_area_label
                         )
                 
                 updated_survivor = survivor.copy()
@@ -159,16 +179,35 @@ else:
                 
                 # --- 1. Random Event ---
                 living_survivors = [s for s in state["survivors"] if s["hp"] > 0]
-                event_outcome = llm_engine.generate_daily_event(state["day"], scenario_data, living_survivors)
-                event_res = event_outcome.get("camp_resource_change", {})
-                new_resources = game_logic.add_resources(new_resources, event_res)
+                outcome = llm_engine.generate_daily_event(
+                    state["day"], 
+                    scenario_data, 
+                    living_survivors
+                )
+                
+                # Apply the generated math
+                raw_res_gained = outcome.get("resources_gained", {})
+                res_gained = {res: min(max(amt, -10), 10) for res, amt in raw_res_gained.items()}
+                for res, amt in res_gained.items():
+                    new_resources[res] = max(0, new_resources.get(res, 0) + amt)
+                
+                hp_change = outcome.get("hp_change", 0)
+                if hp_change < 0:
+                    for active_survivor in living_survivors:
+                        for i, s in enumerate(state["survivors"]):
+                            if s["name"] == active_survivor["name"]:
+                                state["survivors"][i].update(game_logic.consume_survivor_hp(s, abs(hp_change)))
+                                break
                 
                 # Build stat tags for the event (e.g., [+5 food])
-                e_stats = [f"+{amt} {res}" if amt > 0 else f"{amt} {res}" for res, amt in event_res.items() if amt != 0]
+                e_stats = [f"+{amt} {res}" if amt > 0 else f"{amt} {res}" for res, amt in res_gained.items() if amt != 0]
+                if hp_change < 0:
+                    e_stats.append(f"{hp_change} HP")
+                    
                 e_stat_str = f"\n\n`[{', '.join(e_stats)}]`" if e_stats else ""
                 
                 # Use blockquotes (>) to make the event stand out from the survivor logs
-                narrative_summaries.append(f"**🌟 Event: {event_outcome.get('event_title', 'Update')}**\n> {event_outcome.get('narrative', '')}{e_stat_str}")
+                narrative_summaries.append(f"**🌟 Event: {outcome.get('event_title', 'Update')}**\n> {outcome.get('narrative', '')}{e_stat_str}")
                 
                 # --- 2. Resolve Survivor Actions ---
                 for survivor in living_survivors:
@@ -251,9 +290,9 @@ else:
                             # Apply the generated math
                             raw_res_gained = outcome.get("resources_gained", {})
                             res_gained = {res: min(max(amt, -10), 10) for res, amt in raw_res_gained.items()}
-                            hp_change = outcome.get("hp_change", 0)
-                            
                             new_resources = game_logic.add_resources(new_resources, res_gained)
+
+                            hp_change = outcome.get("hp_change", 0)
                             if hp_change < 0:
                                 for i, s in enumerate(state["survivors"]):
                                     if s["name"] == survivor["name"]:
