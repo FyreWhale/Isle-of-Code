@@ -129,8 +129,9 @@ else:
                 new_resources = state["resources"].copy()
                 narrative_summaries = []
                 
-                # --- 1. Random Event (With Stat Formatting) ---
-                event_outcome = llm_engine.generate_daily_event(state["day"], scenario_data)
+                # --- 1. Random Event ---
+                living_survivors = [s for s in state["survivors"] if s["hp"] > 0]
+                event_outcome = llm_engine.generate_daily_event(state["day"], scenario_data, living_survivors)
                 event_res = event_outcome.get("camp_resource_change", {})
                 new_resources = game_logic.add_resources(new_resources, event_res)
                 
@@ -284,21 +285,39 @@ else:
 
                 if st.button(f"Craft {item_to_craft}", use_container_width=True):
                     if game_logic.has_sufficient_resources(state["resources"], cost):
+                        # 1. Deduct cost and add item to inventory
                         state = game_logic.craft_item(state, cost, item_to_craft)
+                        
+                        living_survivors = [s for s in state["survivors"] if s["hp"] > 0]
+                        new_resources = state["resources"].copy()
+                        narrative_summaries = []
+                        
+                        # 2. Generate the collaborative group crafting story
+                        group_narrative = llm_engine.generate_crafting_narrative(living_survivors, item_to_craft)
+                        narrative_summaries.append(f"**🔨 Group Project: {item_to_craft}**\n> {group_narrative}")
+                        
+                        # 3. Crafting takes a full day: Apply Daily Food Consumption / Starvation Mechanic
+                        food_needed = len(living_survivors)
+                        
+                        if new_resources.get("food", 0) >= food_needed:
+                            new_resources["food"] -= food_needed
+                            narrative_summaries.append(f"**Camp Logistics**: While working hard on the project, the group ate their daily rations. \n\n`[-{food_needed} food]`")
+                        else:
+                            new_resources["food"] = 0
+                            for survivor in living_survivors:
+                                for i, s in enumerate(state["survivors"]):
+                                    if s["name"] == survivor["name"]:
+                                        state["survivors"][i].update(game_logic.consume_survivor_hp(s, 15))
+                                        break
+                            narrative_summaries.append(f"**⚠️ STARVATION**: Working on an empty stomach! Everyone grows weaker. \n\n`[-15 HP to all]`")
+
+                        # 4. Update State & Advance Day
+                        state["resources"] = new_resources
+                        state = game_logic.advance_day(state)
                         st.session_state.game_state = state
                         
-                        # Pick a survivor to take credit for the crafting project
-                        active_survivor = next((s for s in state["survivors"] if s["hp"] > 0), {"name": "The Camp", "trait": "Resourceful"})
-                        
-                        # Generate the character-driven crafting narrative
-                        craft_narrative = llm_engine.generate_crafting_narrative(
-                            active_survivor["name"],
-                            active_survivor.get("trait", "A standard survivor."),
-                            item_to_craft
-                        )
-                        
-                        log_text = f"**{active_survivor['name']}**: \"{craft_narrative}\""
-                        st.session_state.narrative_log.append(f"Day {state['day']}: \n\n**Crafting Success: {item_to_craft}**\n\n{log_text}")
+                        daily_log = "\n\n---\n\n".join(narrative_summaries)
+                        st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n{daily_log}")
                         st.rerun()
                     else:
                         st.warning(f"Not enough resources to craft {item_to_craft}!")

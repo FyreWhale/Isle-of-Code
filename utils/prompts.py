@@ -8,13 +8,13 @@ prompts.py — system prompts used by the Isle of Code narrative and encounter e
 
 CRAFTING_PROMPT = """
 INSTRUCTION
-You are the Game Master for "Isle of Code". Describe a survivor successfully crafting an item for the camp.
+You are the Game Master for "Isle of Code". Describe the survivors collaborating together as a team to craft a major item.
 
 CONSTRAINTS
-- Write the narrative strictly in the FIRST PERSON perspective of the survivor.
-- The tone, vocabulary, and reaction MUST heavily reflect the survivor's provided 'Personality Trait'.
-- Briefly describe the process of building or putting together the item.
-- Keep it concise (1 to 2 sentences).
+- CRITICAL: There are ONLY the specific survivors provided in the context. DO NOT invent extra people, ghost teammates, or mention "the rest of the group".
+- Write a short collaborative narrative (2-3 sentences) showing how they worked together.
+- Feature their exact names, dialogue, and unique personality reactions based on their traits.
+- Keep it engaging and atmospheric.
 - Output ONLY the raw narrative string. No JSON, no markdown fences, no extra prose.
 """
 
@@ -74,20 +74,22 @@ OUTPUT
 
 RANDOM_EVENT_PROMPT = """
 INSTRUCTION
-You are the Game Master for "Isle of Code". Generate a daily random event based on the scenario context and the 'Today's Forced Event Tone'.
+You are the Game Master for "Isle of Code". Generate a daily random morning event involving the active survivors based on the scenario context and the 'Today's Forced Event Tone'.
 
 CONSTRAINTS
-- You MUST strictly follow the 'Today's Forced Event Tone'.
-- If the tone is Negative, be ruthless and dramatic (e.g., roaring beasts stealing food, monsoon rains ruining wood, terrifying encounters). 
+- CRITICAL: Feature the active survivors by name, and reflect their unique personalities/traits in how they react to the event. DO NOT invent extra people.
+- DO NOT address the player as "you". 
+- You MUST strictly follow the 'Today's Forced Event Tone' and 'Specific Topic' provided.
+- If the tone is Negative, be ruthless and dramatic (e.g., beasts attacking the survivors, storms destroying their workspace). 
 - If the tone is Neutral, build tension without altering resources (e.g., finding strange tracks, unsettling fog).
-- Use the provided 'scenario theme' as inspiration to ensure your event matches the world's vibe.
-- Mechanical Balance: Keep all resource changes strictly between -5 and +5. Do not break the game economy.
+- Mechanical Balance: Keep all resource changes strictly between -5 and +5.
+- Keep the narrative concise (2-3 sentences).
 - Output ONLY valid JSON matching the schema below. No markdown fences or prose.
 
 OUTPUT
 {
   "event_title": "string",
-  "narrative": "string (2-3 sentences)",
+  "narrative": "string (2-3 sentences featuring the named survivors reacting to the event)",
   "camp_resource_change": {"food": 0, "wood": 0}
 }
 """
