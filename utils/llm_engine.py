@@ -175,3 +175,41 @@ def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: 
     except Exception as e:
         print(f"Custom Action Error: {e}")
         return fallback
+
+def generate_crafting_narrative(survivor_name: str, survivor_trait: str, item_name: str) -> str:
+    """Generates a first-person narrative for crafting an item.
+    
+    Args:
+        survivor_name (str): The name of the survivor crafting the item.
+        survivor_trait (str): The personality trait of the survivor affecting crafting narrative.
+        item_name (str): The name of the item being crafted.
+    
+    Returns:
+        str: A narrative string describing the crafting process.
+    """
+    api_key = os.getenv("GROQ_API_KEY")
+    fallback = f"I finished crafting the {item_name}. It wasn't easy, but we pulled it off."
+
+    if not os.getenv("GROQ_API_KEY") and not os.getenv("GEMINI_API_KEY"): 
+        return fallback
+
+    context = f"Survivor: {survivor_name}\nPersonality Trait: {survivor_trait}\nItem Crafted: {item_name}"
+
+    try:
+        response = completion(
+            model="groq/llama-3.3-70b-versatile",
+            fallbacks=[
+                "groq/llama-3.1-8b-instant",
+                "gemini/gemini-1.5-flash"
+            ],
+            messages=[
+                {"role": "system", "content": prompts.CRAFTING_PROMPT},
+                {"role": "user", "content": context}
+            ],
+            temperature=0.7,
+            max_tokens=150
+        )
+        return response["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        print(f"Crafting Narrative Error: {e}")
+        return fallback

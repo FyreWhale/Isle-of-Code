@@ -1,4 +1,5 @@
 {
   "Campfire": {"wood": 3},
-  "Spear": {"wood": 2}
+  "Spear": {"wood": 2},
+  "Distress Beacon": {"wood": 10,"food": 5}
 }
