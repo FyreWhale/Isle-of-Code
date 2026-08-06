@@ -135,7 +135,7 @@ with left_col:
                     
                     new_resources = game_logic.add_resources(new_resources, res_gained)
                     if hp_change < 0:
-                        survivor = game_logic.consume_survivor_hp(survivor, abs(hp_change))
+                        survivor.update(game_logic.consume_survivor_hp(survivor, abs(hp_change)))
                         
                     s_stats = [f"+{amt} {res}" for res, amt in res_gained.items() if amt > 0]
                     if hp_change < 0:
@@ -156,7 +156,7 @@ with left_col:
             else:
                 new_resources["food"] = 0
                 for survivor in living_survivors:
-                    survivor = game_logic.consume_survivor_hp(survivor, 15) # Starvation penalty
+                    survivor.update(game_logic.consume_survivor_hp(survivor, 15)) # Starvation penalty
                 narrative_summaries.append(f"**⚠️ STARVATION**: There was not enough food! Everyone goes hungry and grows weaker. \n\n`[-15 HP to all]`")
 
             # --- 4. Update State & Log ---
@@ -171,30 +171,65 @@ with left_col:
     # --- TAB 2: CUSTOM ACTION ---
     with tab_custom:
         st.caption("Type a free-form action for the survivors.")
-        custom_action_input = st.text_input("What do you want the survivors to do?", placeholder="e.g., Search the beach for wreckage")
+        custom_action_input = st.text_input("What do you want the survivors to do?", placeholder="e.g., Build a signal fire")
 
         if st.button("Execute Custom Action", use_container_width=True):
             if custom_action_input:
-                intent = llm_engine.parse_custom_action_intent(custom_action_input)
                 active_survivor = next((s for s in state["survivors"] if s["hp"] > 0), None)
 
                 if active_survivor:
-                    for i, s in enumerate(state["survivors"]):
-                        if s["name"] == updated_survivor["name"]:
-                            state["survivors"][i] = updated_survivor
-                            break
+                    new_resources = state["resources"].copy()
                     
+                    # 1. Ask the LLM to resolve the custom action dynamically!
+                    outcome = llm_engine.resolve_custom_action(
+                        active_survivor["name"],
+                        active_survivor.get("trait", "A standard survivor."),
+                        custom_action_input
+                    )
+                    
+                    # 2. Apply the generated math
+                    res_gained = outcome.get("resources_gained", {})
+                    hp_change = outcome.get("hp_change", 0)
+                    
+                    new_resources = game_logic.add_resources(new_resources, res_gained)
+                    if hp_change < 0:
+                        for i, s in enumerate(state["survivors"]):
+                            if s["name"] == active_survivor["name"]:
+                                state["survivors"][i].update(game_logic.consume_survivor_hp(s, abs(hp_change)))
+                                break
+                    
+                    # 3. Build the stat tags (e.g., [+2 wood, -5 HP])
+                    s_stats = [f"+{amt} {res}" for res, amt in res_gained.items() if amt > 0]
+                    if hp_change < 0:
+                        s_stats.append(f"{hp_change} HP")
+                    s_stat_str = f"\n\n`[{', '.join(s_stats)}]`" if s_stats else ""
+                    
+                    # 4. Format the custom narrative
+                    custom_narrative = f"**{active_survivor['name']}**: \"{outcome.get('narrative', 'I tried, but failed.')}\"{s_stat_str}"
+                    
+                    # --- 5. Daily Food Consumption (Starvation Mechanic) ---
+                    living_survivors = [s for s in state["survivors"] if s["hp"] > 0]
+                    food_needed = len(living_survivors)
+                    food_log = ""
+                    
+                    if new_resources.get("food", 0) >= food_needed:
+                        new_resources["food"] -= food_needed
+                        food_log = f"\n\n---\n\n**Camp Logistics**: The group ate their daily rations. \n\n`[-{food_needed} food]`"
+                    else:
+                        new_resources["food"] = 0
+                        for survivor in living_survivors:
+                            survivor.update(game_logic.consume_survivor_hp(survivor, 15))
+                        food_log = f"\n\n---\n\n**⚠️ STARVATION**: There was not enough food! Everyone goes hungry and grows weaker. \n\n`[-15 HP to all]`"
+
+                    # --- 6. Update State & Log ---
+                    state["resources"] = new_resources
                     state = game_logic.advance_day(state)
                     st.session_state.game_state = state
                     
-                    flavor = llm_engine.generate_narrative_flavor(
-                        f"Player executed custom action: '{custom_action_input}'. Parsed intent: {intent.get('action_type', 'unknown')} targeting {intent.get('target_resource', 'none')} with {intent.get('estimated_risk', 'low')} risk.",
-                        NARRATIVE_SYSTEM_PROMPT
-                    )
-                    st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n{flavor}")
+                    st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n**Custom Action Attempt:** *'{custom_action_input}'*\n\n{custom_narrative}{food_log}")
                     st.rerun()
                 else:
-                    st.warning("The camp is too exhausted for this custom action!")
+                    st.warning("There are no conscious survivors left to perform this action!")
             else:
                 st.warning("Please type an action first.")
 

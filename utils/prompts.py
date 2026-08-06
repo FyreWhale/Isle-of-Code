@@ -124,3 +124,29 @@ OUTPUT
   "camp_resource_change": {"food": 0, "wood": 0}
 }
 """
+
+# ---------------------------------------------------------------------------
+# Custom Action Prompt
+# ---------------------------------------------------------------------------
+
+CUSTOM_ACTION_PROMPT = """
+INSTRUCTION
+You are the Game Master for "Isle of Code". Calculate the outcome of a survivor performing a custom action provided by the player.
+
+CONSTRAINTS
+- Write the 'narrative' strictly in the FIRST PERSON perspective of the survivor.
+- The tone, vocabulary, and reaction MUST heavily reflect the survivor's provided 'Personality Trait'.
+- Determine a logical outcome (success or failure) based on the action attempted.
+- Generate logical resources gained (integers 0-5) if the action succeeds.
+- Apply hp_change (negative integer) if the action is dangerous, reckless, or fails.
+- INJURY RULE: If hp_change is less than 0, the narrative MUST explicitly state what caused the injury.
+- Keep the overall narrative concise (2 to 3 sentences).
+- Output ONLY valid JSON matching the schema below. No markdown fences or prose.
+
+OUTPUT
+{
+  "narrative": "string (2-3 sentences in first person. MUST explain the cause of injury if hp_change is negative)",
+  "resources_gained": {"food": 0, "wood": 0},
+  "hp_change": 0
+}
+"""
