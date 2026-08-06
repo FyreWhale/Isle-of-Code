@@ -35,3 +35,13 @@ def test_add_resources() -> None:
     updated = game_logic.add_resources(resources, earned)
     assert updated["food"] == 9
     assert updated["wood"] == 5
+
+def test_consume_survivor_energy() -> None:
+    """Tests that survivor energy is correctly deducted without dropping below zero."""
+    survivor = {"name": "Alex", "hp": 100, "energy": 50, "skills": {"scavenge": 5}}
+    updated = game_logic.consume_survivor_energy(survivor, 20)
+    assert updated["energy"] == 30
+    
+    # Test boundary condition (energy shouldn't go negative)
+    exhausted = game_logic.consume_survivor_energy(updated, 50)
+    assert exhausted["energy"] == 0

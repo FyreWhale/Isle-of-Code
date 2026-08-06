@@ -68,3 +68,16 @@ def add_resources(current_resources:dict, earned: dict) -> dict:
         updated_resources[resource] = updated_resources.get(resource, 0) + amount
     return updated_resources
 
+def consume_survivor_energy(survivor: dict, energy_cost: int) -> dict:
+    """Deducts energy cost from a survivor's current pool, ensuring it does not drop below zero.
+
+    Args:
+        survivor (dict): The survivor dictionary containing energy stats.
+        energy_cost (int): The amount of energy to subtract.
+
+    Returns:
+        dict: The updated survivor dictionary.
+    """
+    updated_survivor = survivor.copy()
+    updated_survivor["energy"] = max(0, updated_survivor["energy"] - energy_cost)
+    return updated_survivor
