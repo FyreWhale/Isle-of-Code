@@ -1,0 +1,7 @@
+{
+  "deep_jungle": {
+    "name": "Deep Jungle",
+    "primary_resources": ["wood", "herbs"],
+    "danger_level": "medium"
+  }
+}

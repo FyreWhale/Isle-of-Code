@@ -106,3 +106,55 @@ def parse_custom_action_intent(user_input: str) -> dict:
     except Exception:
         # Fallback dictionary to prevent application crashes on parse errors
         return {"action_type": "unknown", "target_resource": "none", "estimated_risk": "low"}
+
+def resolve_dynamic_exploration(survivor_name: str, area_data: dict) -> dict:
+    """Generates a dynamic exploration outcome based on JSON area data."""
+    api_key = os.getenv("GROQ_API_KEY")
+    fallback = {"narrative": f"{survivor_name} found nothing.", "resources_gained": {}, "hp_change": 0}
+    
+    if not api_key: return fallback
+
+    context = f"Survivor: {survivor_name}. Area Data: {json.dumps(area_data)}"
+
+    try:
+        response = completion(
+            model="groq/llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": prompts.DYNAMIC_EXPLORATION_PROMPT},
+                {"role": "user", "content": context}
+            ],
+            api_key=api_key,
+            temperature=0.7,
+            max_tokens=150
+        )
+        content = response["choices"][0]["message"]["content"].strip()
+        return json.loads(content)
+    except Exception as e:
+        print(f"Exploration Error: {e}")
+        return fallback
+
+def generate_daily_event(day: int, scenario_data: dict) -> dict:
+    """Generates a random morning event based on the scenario JSON."""
+    api_key = os.getenv("GROQ_API_KEY")
+    fallback = {"event_title": "A Quiet Morning", "narrative": "Nothing unusual happens today.", "camp_resource_change": {}}
+    
+    if not api_key: return fallback
+
+    context = f"Day: {day}. Scenario Data: {json.dumps(scenario_data)}"
+
+    try:
+        response = completion(
+            model="groq/llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": prompts.RANDOM_EVENT_PROMPT},
+                {"role": "user", "content": context}
+            ],
+            api_key=api_key,
+            temperature=0.8,
+            max_tokens=200
+        )
+        content = response["choices"][0]["message"]["content"].strip()
+        return json.loads(content)
+    except Exception as e:
+        print(f"Event Error: {e}")
+        return fallback

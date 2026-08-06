@@ -1,0 +1,7 @@
+{
+  "lost_island": {
+    "name": "Lost Island",
+    "description": "A remote, uncharted tropical island with remnants of a forgotten civilization.",
+    "possible_events": ["plane_flyover", "tropical_storm", "washed_up_cargo"]
+  }
+}
