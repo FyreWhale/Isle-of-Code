@@ -20,14 +20,10 @@ def test_has_sufficient_resources_failure() -> None:
     cost = {"food": 5, "wood": 2}
     assert game_logic.has_sufficient_resources(resources, cost) is False
 
-def test_has_sufficient_resources_success() -> None:
-    """Tests resource validation logic when player has sufficient stock."""
+def test_consume_resources() -> None:
+    """Tests that resource costs are correctly subtracted from player inventory."""
     resources = {"food": 10, "wood": 5}
-    cost = {"food": 5, "wood": 2}
-    assert game_logic.has_sufficient_resources(resources, cost) is True
-
-def test_has_sufficient_resources_failure() -> None:
-    """Tests resource validation logic when player lacks sufficient stock."""
-    resources = {"food": 2, "wood": 1}
-    cost = {"food": 5, "wood": 2}
-    assert game_logic.has_sufficient_resources(resources, cost) is False
+    cost = {"food": 3, "wood": 2}
+    updated = game_logic.consume_resources(resources, cost)
+    assert updated["food"] == 7
+    assert updated["wood"] == 3

@@ -37,17 +37,18 @@ def has_sufficient_resources(current_resources: dict, cost: dict) -> bool:
             return False
     return True
 
-def has_sufficient_resources(current_resources: dict, cost: dict) -> bool:
-    """Validates whether current resource stock meets a required cost dictionary.
+def consume_resources(current_resources: dict, cost: dict) -> dict:
+    """Deducts specified resource costs from the current resource stock.
 
     Args:
         current_resources (dict): The player's available resources.
-        cost (dict): The required resources for the action.
+        cost (dict): The resources to deduct.
 
     Returns:
-        bool: True if sufficient resources are available, False otherwise.
+        dict: The updated resource dictionary.
     """
-    for resource, required_amount in cost.items():
-        if current_resources.get(resource, 0) < required_amount:
-            return False
-    return True
+    updated_resources = current_resources.copy()
+    for resource, amount in cost.items():
+        if resource in updated_resources:
+            updated_resources[resource] = max(0, updated_resources[resource] - amount)
+    return updated_resources
