@@ -87,10 +87,31 @@ elif not is_alive:
 
 else:
     # --- The game continues! Show the normal controls ---
-    left_col, right_col = st.columns([1.5, 1], gap="large")
+    left_col, mid_col, right_col = st.columns([1, 1.2, 1.2], gap="large")
 
-    # --- LEFT COLUMN: CONTROLS ---
+    # ==========================================
+    # LEFT COLUMN: SURVIVOR STATUS
+    # ==========================================
     with left_col:
+        st.subheader("🏕️ Survivor Roster")
+        with st.container(border=True):
+            total_survivors = len(state["survivors"])
+            
+            for i, survivor in enumerate(state["survivors"]):
+                if survivor["hp"] <= 0:
+                    st.markdown(f"💀 ~~**{survivor['name']}**~~ `[DEAD]`")
+                else:
+                    st.markdown(f"👤 **{survivor['name']}** — `{survivor['hp']}/100 HP`")
+                    st.progress(survivor["hp"] / 100)
+                    st.caption(f"*{survivor.get('trait', 'A standard survivor.')}*")
+
+                if i < total_survivors - 1:
+                    st.divider()
+
+    # ==========================================
+    # MIDDLE COLUMN: CONTROLS & TABS
+    # ==========================================
+    with mid_col:
         tab_tasks, tab_custom, tab_craft = st.tabs([
             "🏕️ Task Assignment", 
             "✍️ Custom Action", 
@@ -104,22 +125,20 @@ else:
 
             for i, survivor in enumerate(state["survivors"]):
                 col_a, col_b = st.columns([1, 2])
+                
                 with col_a:
                     if survivor["hp"] <= 0:
-                        st.markdown(f"~~**{survivor['name']}**~~")
-                        st.caption("DECEASED")
+                        continue
                     else:
                         st.markdown(f"**{survivor['name']}**")
-                        st.caption(f"HP: {survivor['hp']}/100")
-
+                
                 with col_b:
                     if survivor["hp"] <= 0:
-                        st.error("This survivor has fallen.")
-                        selected_area = "Dead"
+                        continue
                     else:
                         current_area_index = available_areas.index(survivor["assigned_area"]) if survivor["assigned_area"] in available_areas else 0
                         selected_area = st.selectbox(
-                            f"Assign to area:",
+                            "Assign task:",
                             options=available_areas,
                             index=current_area_index,
                             key=f"area_{i}",
@@ -336,7 +355,9 @@ else:
                     else:
                         st.warning(f"Not enough resources to craft {item_to_craft}!")
 
-    # --- RIGHT COLUMN: LATEST REPORT ---
+    # ==========================================
+    # RIGHT COLUMN: LATEST REPORT
+    # ==========================================
     with right_col:
         st.subheader("🔔 Latest Report")
         with st.container(border=True):
