@@ -171,62 +171,70 @@ with left_col:
     # --- TAB 2: CUSTOM ACTION ---
     with tab_custom:
         st.caption("Type a free-form action for the survivors.")
-        custom_action_input = st.text_input("What do you want the survivors to do?", placeholder="e.g., Build a signal fire")
+        custom_action_input = st.text_input("What do you want the survivors to do?", placeholder="e.g., Search the beach for wreckage")
 
         if st.button("Execute Custom Action", use_container_width=True):
             if custom_action_input:
-                active_survivor = next((s for s in state["survivors"] if s["hp"] > 0), None)
+                living_survivors = [s for s in state["survivors"] if s["hp"] > 0]
 
-                if active_survivor:
+                if living_survivors:
                     new_resources = state["resources"].copy()
+                    narrative_summaries = []
                     
-                    # 1. Ask the LLM to resolve the custom action dynamically!
-                    outcome = llm_engine.resolve_custom_action(
-                        active_survivor["name"],
-                        active_survivor.get("trait", "A standard survivor."),
-                        custom_action_input
-                    )
+                    # 1. Loop through ALL conscious survivors
+                    for survivor in living_survivors:
+                        
+                        # Ask the LLM to resolve the custom action dynamically for this specific survivor
+                        outcome = llm_engine.resolve_custom_action(
+                            survivor["name"],
+                            survivor.get("trait", "A standard survivor."),
+                            custom_action_input
+                        )
+                        
+                        # Apply the generated math
+                        res_gained = outcome.get("resources_gained", {})
+                        hp_change = outcome.get("hp_change", 0)
+                        
+                        new_resources = game_logic.add_resources(new_resources, res_gained)
+                        if hp_change < 0:
+                            for i, s in enumerate(state["survivors"]):
+                                if s["name"] == survivor["name"]:
+                                    state["survivors"][i].update(game_logic.consume_survivor_hp(s, abs(hp_change)))
+                                    break
+                        
+                        # Build the stat tags (e.g., [+2 wood, -5 HP])
+                        s_stats = [f"+{amt} {res}" for res, amt in res_gained.items() if amt > 0]
+                        if hp_change < 0:
+                            s_stats.append(f"{hp_change} HP")
+                        s_stat_str = f"\n\n`[{', '.join(s_stats)}]`" if s_stats else ""
+                        
+                        # Format the custom narrative and append to the list
+                        narrative_summaries.append(f"**{survivor['name']}**: \"{outcome.get('narrative', 'I tried, but failed.')}\"{s_stat_str}")
                     
-                    # 2. Apply the generated math
-                    res_gained = outcome.get("resources_gained", {})
-                    hp_change = outcome.get("hp_change", 0)
-                    
-                    new_resources = game_logic.add_resources(new_resources, res_gained)
-                    if hp_change < 0:
-                        for i, s in enumerate(state["survivors"]):
-                            if s["name"] == active_survivor["name"]:
-                                state["survivors"][i].update(game_logic.consume_survivor_hp(s, abs(hp_change)))
-                                break
-                    
-                    # 3. Build the stat tags (e.g., [+2 wood, -5 HP])
-                    s_stats = [f"+{amt} {res}" for res, amt in res_gained.items() if amt > 0]
-                    if hp_change < 0:
-                        s_stats.append(f"{hp_change} HP")
-                    s_stat_str = f"\n\n`[{', '.join(s_stats)}]`" if s_stats else ""
-                    
-                    # 4. Format the custom narrative
-                    custom_narrative = f"**{active_survivor['name']}**: \"{outcome.get('narrative', 'I tried, but failed.')}\"{s_stat_str}"
-                    
-                    # --- 5. Daily Food Consumption (Starvation Mechanic) ---
-                    living_survivors = [s for s in state["survivors"] if s["hp"] > 0]
+                    # --- 2. Daily Food Consumption (Starvation Mechanic) ---
                     food_needed = len(living_survivors)
-                    food_log = ""
                     
                     if new_resources.get("food", 0) >= food_needed:
                         new_resources["food"] -= food_needed
-                        food_log = f"\n\n---\n\n**Camp Logistics**: The group ate their daily rations. \n\n`[-{food_needed} food]`"
+                        narrative_summaries.append(f"**Camp Logistics**: The group ate their daily rations. \n\n`[-{food_needed} food]`")
                     else:
                         new_resources["food"] = 0
                         for survivor in living_survivors:
-                            survivor.update(game_logic.consume_survivor_hp(survivor, 15))
-                        food_log = f"\n\n---\n\n**⚠️ STARVATION**: There was not enough food! Everyone goes hungry and grows weaker. \n\n`[-15 HP to all]`"
+                            for i, s in enumerate(state["survivors"]):
+                                if s["name"] == survivor["name"]:
+                                    state["survivors"][i].update(game_logic.consume_survivor_hp(s, 15))
+                                    break
+                        narrative_summaries.append(f"**⚠️ STARVATION**: There was not enough food! Everyone goes hungry and grows weaker. \n\n`[-15 HP to all]`")
 
-                    # --- 6. Update State & Log ---
+                    # --- 3. Update State & Log ---
                     state["resources"] = new_resources
                     state = game_logic.advance_day(state)
                     st.session_state.game_state = state
                     
-                    st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n**Custom Action Attempt:** *'{custom_action_input}'*\n\n{custom_narrative}{food_log}")
+                    # Combine all individual narratives with a separator
+                    daily_log = "\n\n---\n\n".join(narrative_summaries)
+                    
+                    st.session_state.narrative_log.append(f"Day {state['day'] - 1}: \n\n**Custom Action Attempt:** *'{custom_action_input}'*\n\n---\n\n{daily_log}")
                     st.rerun()
                 else:
                     st.warning("There are no conscious survivors left to perform this action!")
