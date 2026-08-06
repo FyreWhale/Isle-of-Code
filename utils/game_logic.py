@@ -52,3 +52,19 @@ def consume_resources(current_resources: dict, cost: dict) -> dict:
         if resource in updated_resources:
             updated_resources[resource] = max(0, updated_resources[resource] - amount)
     return updated_resources
+
+def add_resources(current_resources:dict, earned: dict) -> dict:
+    """Adds earned resources to the current resource stock.
+
+    Args:
+        current_resources (dict): The player's current available resources.
+        earned (dict): The resources gained from an action.
+
+    Returns:
+        dict: The updated resource dictionary.
+    """
+    updated_resources = current_resources.copy()
+    for resource, amount in earned.items():
+        updated_resources[resource] = updated_resources.get(resource, 0) + amount
+    return updated_resources
+

@@ -27,3 +27,11 @@ def test_consume_resources() -> None:
     updated = game_logic.consume_resources(resources, cost)
     assert updated["food"] == 7
     assert updated["wood"] == 3
+
+def test_add_resources() -> None:
+    """Tests that gathered resources are correctly added to player inventory."""
+    resources = {"food": 5, "wood": 2}
+    earned = {"food": 4, "wood": 3}
+    updated = game_logic.add_resources(resources, earned)
+    assert updated["food"] == 9
+    assert updated["wood"] == 5
