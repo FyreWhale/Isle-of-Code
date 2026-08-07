@@ -19,19 +19,159 @@ areas_data = game_data.get("areas", {})
 survivor_pool = game_data.get("survivors", [])
 valid_resources = game_data.get("valid_resources", [])
 
-# 2. Pass the loaded survivor pool into the game state generator
-if "game_state" not in st.session_state:
-    st.session_state.game_state = game_logic.get_initial_game_state(survivor_pool)
+# 2. Game Setup & Character Creation Phase
+if "game_started" not in st.session_state:
+    st.session_state.game_started = False
 
-# 3. Generate the Dynamic Day 0 Narrative
-if "narrative_log" not in st.session_state:
-    # Use a spinner so the user knows the AI is writing the intro during the initial load
-    with st.spinner("Generating world and landing survivors..."):
-        intro_text = llm_engine.generate_intro_narrative(
-            st.session_state.game_state["survivors"], 
-            scenario_data
-        )
-        st.session_state.narrative_log = [intro_text]
+if not st.session_state.game_started:
+    st.title("🏝️ Isle of Code - Camp Setup")
+    st.write("Create the two founding survivors of your camp!")
+    
+    # Helper function to dynamically stitch together the personality string
+    def generate_dynamic_trait(ei, sn, tf, jp):
+        traits = []
+        
+        if ei <= -3: traits.append("deeply introverted and avoids speaking")
+        elif ei < 0: traits.append("quiet and keeps to themselves")
+        elif ei == 0: traits.append("socially balanced")
+        elif ei >= 3: traits.append("extremely loud, outgoing, and never stops talking")
+        else: traits.append("sociable and enjoys chatting")
+        
+        if sn <= -3: traits.append("obsessed with literal facts and tangible resources")
+        elif sn < 0: traits.append("grounded and highly practical")
+        elif sn == 0: traits.append("pragmatic yet open-minded")
+        elif sn >= 3: traits.append("wildly imaginative and easily distracted by abstract ideas")
+        else: traits.append("creative and constantly thinking of new concepts")
+        
+        if tf <= -3: traits.append("cold, calculating, and entirely emotionally detached")
+        elif tf < 0: traits.append("highly logical and relies on reason over feelings")
+        elif tf == 0: traits.append("reasonable but considers others' feelings")
+        elif tf >= 3: traits.append("a bleeding-heart who is intensely emotional and sensitive")
+        else: traits.append("empathetic and driven heavily by their emotions")
+        
+        if jp <= -3: traits.append("utterly chaotic, impulsive, and hates following plans")
+        elif jp < 0: traits.append("flexible and prefers taking things as they come")
+        elif jp == 0: traits.append("adaptable but appreciates basic order")
+        elif jp >= 3: traits.append("rigidly structured, bossy, and panics if routines break")
+        else: traits.append("organized and prefers having a clear plan")
+        
+        return ", ".join(traits[:-1]) + ", and " + traits[-1] + "."
+
+    # Helper function to generate a dynamic archetype title based on extreme scores
+    def generate_dynamic_title(ei, sn, tf, jp):
+        # Determine the Adjective (from EI or SN, whichever is more extreme)
+        if abs(ei) >= abs(sn):
+            if ei <= -3: adj = "Silent"
+            elif ei < 0: adj = "Reserved"
+            elif ei == 0: adj = "Steady"
+            elif ei >= 3: adj = "Radiant"
+            else: adj = "Bold"
+        else:
+            if sn <= -3: adj = "Ironclad"
+            elif sn < 0: adj = "Grounded"
+            elif sn >= 3: adj = "Visionary"
+            else: adj = "Curious"
+            
+        # Determine the Noun (from TF or JP, whichever is more extreme)
+        if abs(tf) >= abs(jp):
+            if tf <= -3: noun = "Machine"
+            elif tf < 0: noun = "Tactician"
+            elif tf == 0: noun = "Survivor"
+            elif tf >= 3: noun = "Martyr"
+            else: noun = "Guardian"
+        else:
+            if jp <= -3: noun = "Wildcard"
+            elif jp < 0: noun = "Drifter"
+            elif jp >= 3: noun = "Dictator"
+            else: noun = "Architect"
+            
+        # Catch-all for a perfectly balanced character
+        if ei == 0 and sn == 0 and tf == 0 and jp == 0:
+            return "The True Neutral"
+            
+        return f"The {adj} {noun}"
+
+    tab1, tab2 = st.tabs(["👤 Survivor 1", "👤 Survivor 2"])
+    
+    with tab1:
+        col_name, col_pronoun = st.columns([3, 1])
+        with col_name:
+            name1 = st.text_input("Survivor 1 Name", "Mark", key="name1")
+        with col_pronoun:
+            pronoun1 = st.selectbox("Pronouns", ["He", "She", "They"], key="pro1")
+            
+        st.caption("Adjust the sliders to define their profile.")
+        
+        col_a, col_b = st.columns(2)
+        with col_a:
+            ei1 = st.slider("Reserved ⟷ Outgoing", -5, 5, 0, key="ei1")
+            sn1 = st.slider("Practical ⟷ Imaginative", -5, 5, 0, key="sn1")
+        with col_b:
+            tf1 = st.slider("Logical ⟷ Empathetic", -5, 5, 0, key="tf1")
+            jp1 = st.slider("Adaptable ⟷ Structured", -5, 5, 0, key="jp1")
+            
+        title1 = generate_dynamic_title(ei1, sn1, tf1, jp1)
+        core_traits1 = generate_dynamic_trait(ei1, sn1, tf1, jp1)
+
+        st.markdown(f"**Calculated Archetype:** `{title1}`")
+        st.caption(f"*They are {core_traits1}*")
+        
+        verb1 = "are" if pronoun1 == "They" else "is"
+        game_trait1 = f"{pronoun1} {verb1} {core_traits1}"
+        
+    with tab2:
+        col_name, col_pronoun = st.columns([3, 1])
+        with col_name:
+            name2 = st.text_input("Survivor 2 Name", "Jonas", key="name2")
+        with col_pronoun:
+            pronoun2 = st.selectbox("Pronouns", ["He", "She", "They"], key="pro2")
+            
+        st.caption("Adjust the sliders to define their profile.")
+        
+        col_c, col_d = st.columns(2)
+        with col_c:
+            ei2 = st.slider("Reserved ⟷ Outgoing", -5, 5, 1, key="ei2")
+            sn2 = st.slider("Practical ⟷ Imaginative", -5, 5, 1, key="sn2")
+        with col_d:
+            tf2 = st.slider("Logical ⟷ Empathetic", -5, 5, 1, key="tf2")
+            jp2 = st.slider("Adaptable ⟷ Structured", -5, 5, 1, key="jp2")
+            
+        title2 = generate_dynamic_title(ei2, sn2, tf2, jp2)
+        core_traits2 = generate_dynamic_trait(ei2, sn2, tf2, jp2)
+        
+        st.markdown(f"**Calculated Archetype:** `{title2}`")
+        st.caption(f"*They are {core_traits2}*")
+        
+        verb2 = "are" if pronoun2 == "They" else "is"
+        game_trait2 = f"{pronoun2} {verb2} {core_traits2}"
+        
+    # Start Game Execution
+    if st.button("🚀 Start Survival Run", use_container_width=True):
+        
+        survivor_1 = {"name": name1, "skills": {"scavenge": 4, "combat": 4}, "trait": game_trait1}
+        survivor_2 = {"name": name2, "skills": {"scavenge": 4, "combat": 4}, "trait": game_trait2}
+        
+        st.session_state.game_state = {
+            "day": 1,
+            "resources": {"food": 10, "wood": 5},
+            "inventory": [],
+            "survivors": [
+                {**survivor_1, "hp": 100, "assigned_area": "Idle"},
+                {**survivor_2, "hp": 100, "assigned_area": "Idle"}
+            ]
+        }
+        
+        with st.spinner("Generating world and landing survivors..."):
+            intro_text = llm_engine.generate_intro_narrative(
+                st.session_state.game_state["survivors"], 
+                scenario_data
+            )
+            st.session_state.narrative_log = [intro_text]
+        
+        st.session_state.game_started = True
+        st.rerun()
+
+    st.stop()
 
 state = st.session_state.game_state
 
