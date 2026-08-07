@@ -63,9 +63,9 @@ Traditional text-based survival games suffer from a core design limitation: they
 
 # Known Limitations
 
-*   **Frontend State Management:** The dynamic player state is maintained entirely in Python via `st.session_state` to prevent AI hallucinations from altering game mechanics[cite: 4]. However, because Streamlit is fundamentally a data-dashboard framework, rapidly clicking through tabs can sometimes cause the visual interface to lag behind the backend data calculations.
-*   **API Rate Limiting:** The multi-provider fallback chain in `config.json` ensures continuous uptime during individual rate limits[cite: 4]. However, simultaneous timeouts across all configured LLM providers will still cause temporary generation delays.
-*   **AI Statelessness ("Amnesia"):** To drastically reduce token consumption and improve generation speed, the application does not feed previous daily logs back into the LLM. The AI evaluates each action purely based on the current turn's state payload (current resources, survivor HP, and static traits)[cite: 4]. Consequently, the AI cannot reference specific narrative events that occurred on previous days.
+*   **Frontend State Management:** The dynamic player state is maintained entirely in Python via `st.session_state` to prevent AI hallucinations from altering game mechanics. However, because Streamlit is fundamentally a data-dashboard framework, rapidly clicking through tabs can sometimes cause the visual interface to lag behind the backend data calculations.
+*   **API Rate Limiting:** The multi-provider fallback chain in `config.json` ensures continuous uptime during individual rate limits. However, simultaneous timeouts across all configured LLM providers will still cause temporary generation delays.
+*   **AI Statelessness ("Amnesia"):** To drastically reduce token consumption and improve generation speed, the application does not feed previous daily logs back into the LLM. The AI evaluates each action purely based on the current turn's state payload (current resources, survivor HP, and static traits). Consequently, the AI cannot reference specific narrative events that occurred on previous days.
 
 # Future Improvements
 
