@@ -130,11 +130,11 @@ if not st.session_state.game_started:
         
         col_c, col_d = st.columns(2)
         with col_c:
-            ei2 = st.slider("Reserved ⟷ Outgoing", -5, 5, 1, key="ei2")
-            sn2 = st.slider("Practical ⟷ Imaginative", -5, 5, 1, key="sn2")
+            ei2 = st.slider("Reserved ⟷ Outgoing", -5, 5, 0, key="ei2")
+            sn2 = st.slider("Practical ⟷ Imaginative", -5, 5, 0, key="sn2")
         with col_d:
-            tf2 = st.slider("Logical ⟷ Empathetic", -5, 5, 1, key="tf2")
-            jp2 = st.slider("Adaptable ⟷ Structured", -5, 5, 1, key="jp2")
+            tf2 = st.slider("Logical ⟷ Empathetic", -5, 5, 0, key="tf2")
+            jp2 = st.slider("Adaptable ⟷ Structured", -5, 5, 0, key="jp2")
             
         title2 = generate_dynamic_title(ei2, sn2, tf2, jp2)
         core_traits2 = generate_dynamic_trait(ei2, sn2, tf2, jp2)
@@ -373,6 +373,7 @@ else:
                 if hp_change < 0 and "Spear" in state.get("inventory", []):
                     hp_change = min(0, hp_change + 1)
                     state["inventory"].remove("Spear")
+                    narrative_summaries.append("**⚠️ Weapon Destroyed**: A Spear snapped in half fending off the danger! \n\n`[-1 Spear, Damage Mitigated]`")
 
                 if hp_change < 0:
                     for active_survivor in living_survivors:
@@ -422,6 +423,7 @@ else:
                         if hp_change < 0 and "Spear" in state.get("inventory", []):
                             hp_change = min(0, hp_change + 1)
                             state["inventory"].remove("Spear")
+                            narrative_summaries.append("**⚠️ Weapon Destroyed**: A Spear snapped in half fending off the danger! \n\n`[-1 Spear, Damage Mitigated]`")
                         
                         if hp_change < 0:
                             survivor.update(game_logic.consume_survivor_hp(survivor, abs(hp_change)))
