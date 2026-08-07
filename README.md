@@ -69,6 +69,6 @@ Traditional text-based survival games suffer from a core design limitation: they
 
 # Future Improvements
 
-*   **Decoupled UI Architecture:** Migrating the frontend away from the `app.py` Streamlit dashboard to a native React interface for more granular control over the front-end[cite: 1].
-*   **Expanded Roster & Persistence:** Adding custom characters to the roster and implementing persistent database saving using SQLite so players can safely save and resume their runs[cite: 1].
+*   **Decoupled UI Architecture:** Migrating the frontend away from the `app.py` Streamlit dashboard to a native React interface for more granular control over the front-end.
+*   **Expanded Roster & Persistence:** Adding custom characters to the roster and implementing persistent database saving using SQLite so players can safely save and resume their runs.
 *   **Expanded Data Models:** Adding more modular JSON files via `data_loader.py` to increase the pool of static scenarios, exploration areas, and crafting recipes.
