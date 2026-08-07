@@ -24,7 +24,21 @@ if "game_started" not in st.session_state:
     st.session_state.game_started = False
 
 if not st.session_state.game_started:
-    st.title("🏝️ Isle of Code - Camp Setup")
+    with st.expander("📖 How to Play (Read Before Starting)", expanded=True):
+        st.markdown("""
+        **🎯 The Objective**
+        You are stranded. Your ultimate goal is to survive long enough to gather the resources needed to craft the **Distress Beacon** (10 Wood, 10 Metal, 5 Food) and signal for rescue.
+        
+        **💀 How to Lose**
+        If the HP of all your survivors drops to 0, the camp falls and the game is over. 
+        
+        **⚙️ Core Mechanics**
+        *   **Starvation:** The camp consumes **1 Food per living survivor** at the end of *every single day*. If you don't have enough food, everyone suffers a massive **-15 HP penalty**.
+        *   **Exploration:** Assign survivors to different zones to gather resources. Higher danger zones yield better loot but increase the risk of injury.
+        *   **Crafting:** Build items to improve your odds. Spears break to absorb damage, Campfires provide passive healing, and Salves restore HP on demand.
+        *   **Custom Actions:** Use the "Custom Action" tab to type anything you can imagine! The AI Game Master will determine the outcome based on your survivor's unique personality trait.
+        """)
+        
     st.write("Create the two founding survivors of your camp!")
     
     # Helper function to dynamically stitch together the personality string
@@ -179,6 +193,14 @@ state = st.session_state.game_state
 # 2. SIDEBAR: SCROLLING HISTORY LOG
 # ==========================================
 st.sidebar.header("📜 Full Survival Log")
+
+with st.sidebar.expander("📖 Quick Reference"):
+    st.markdown("""
+    *   **Win:** Craft the Distress Beacon.
+    *   **Lose:** All survivors die.
+    *   **Upkeep:** -1 Food per survivor daily. (Penalty: -15 HP).
+    """)
+
 with st.sidebar.container(height=650, border=False):
     for entry in reversed(st.session_state.narrative_log):
         st.markdown(f"• {entry}")
