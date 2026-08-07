@@ -187,9 +187,14 @@ else:
                 
                 # Apply the generated math
                 raw_res_gained = outcome.get("resources_gained", {})
-                res_gained = {res: min(max(amt, -5), 4) for res, amt in raw_res_gained.items()}
-                for res, amt in res_gained.items():
-                    new_resources[res] = max(0, new_resources.get(res, 0) + amt)
+                res_gained = {}
+                
+                for res, amt in raw_res_gained.items():
+                    try:
+                        safe_amt = int(amt)
+                        res_gained[res] = min(max(safe_amt, -5), 4)
+                    except (ValueError, TypeError):
+                        continue
                 
                 raw_hp_change = outcome.get("hp_change", 0)
                 hp_change = min(max(raw_hp_change, -10), 0)
@@ -285,12 +290,21 @@ else:
                                 survivor["name"],
                                 survivor.get("trait", "A standard survivor."),
                                 custom_action_input,
-                                scenario_data
+                                scenario_data,
+                                living_survivors
                             )
                             
                             # Apply the generated math
                             raw_res_gained = outcome.get("resources_gained", {})
-                            res_gained = {res: min(max(amt, -10), 10) for res, amt in raw_res_gained.items()}
+                            res_gained = {}
+                            
+                            for res, amt in raw_res_gained.items():
+                                try:
+                                    safe_amt = int(amt)
+                                    res_gained[res] = min(max(safe_amt, -10), 10)
+                                except (ValueError, TypeError):
+                                    continue
+
                             new_resources = game_logic.add_resources(new_resources, res_gained)
 
                             hp_change = outcome.get("hp_change", 0)

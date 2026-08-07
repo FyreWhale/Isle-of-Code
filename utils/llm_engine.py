@@ -143,7 +143,7 @@ def generate_daily_event(day: int, scenario_data: dict, living_survivors: list) 
         print(f"Event Error: {e}")
         return fallback
 
-def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: str, scenario_data: dict) -> dict:
+def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: str, scenario_data: dict, living_survivors: list) -> dict:
     """Generates a dynamic outcome based on a player's free-form custom action.
     
     Args:
@@ -151,6 +151,7 @@ def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: 
         survivor_trait (str): The personality trait of the survivor affecting action outcomes.
         action_text (str): The free-form text describing the player's custom action.
         scenario_data (dict): Data about the current scenario.
+        living_survivors (list): A list of dictionaries containing details of all living survivors.
 
     Returns:
         dict: A structured dictionary containing narrative, resources_gained, and hp_change.
@@ -160,10 +161,14 @@ def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: 
     if not os.getenv("GROQ_API_KEY") and not os.getenv("GEMINI_API_KEY"): 
         return fallback
 
+    teammates = [s['name'] for s in living_survivors if s['name'] != survivor_name]
+    teammates_str = ", ".join(teammates) if teammates else "None (Alone)"
+
     context = (
         f"Scenario Theme: {scenario_data.get('name', 'Unknown')} - {scenario_data.get('description', '')}\n"
         f"Survivor: {survivor_name}\n"
         f"Personality Trait: {survivor_trait}\n"
+        f"Other Teammates Present: {teammates_str}\n"
         f"Custom Action Attempted: {action_text}"
     )
 
