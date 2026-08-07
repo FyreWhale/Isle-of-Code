@@ -12,18 +12,27 @@ st.set_page_config(
     layout="wide"
 )
 
-if "game_state" not in st.session_state:
-    st.session_state.game_state = game_logic.get_initial_game_state()
-
-if "narrative_log" not in st.session_state:
-    st.session_state.narrative_log = ["Day 0: You wash ashore on a mysterious, uncharted coast. Your survival begins now."]
-
-state = st.session_state.game_state
-
-# Load all game data
+# 1. Load all game data FIRST
 game_data = data_loader.get_all_game_data()
 scenario_data = game_data.get("scenarios", {}).get("lost_island", {})
 areas_data = game_data.get("areas", {})
+survivor_pool = game_data.get("survivors", [])
+
+# 2. Pass the loaded survivor pool into the game state generator
+if "game_state" not in st.session_state:
+    st.session_state.game_state = game_logic.get_initial_game_state(survivor_pool)
+
+# 3. Generate the Dynamic Day 0 Narrative
+if "narrative_log" not in st.session_state:
+    # Use a spinner so the user knows the AI is writing the intro during the initial load
+    with st.spinner("Generating world and landing survivors..."):
+        intro_text = llm_engine.generate_intro_narrative(
+            st.session_state.game_state["survivors"], 
+            scenario_data
+        )
+        st.session_state.narrative_log = [intro_text]
+
+state = st.session_state.game_state
 
 # ==========================================
 # 2. SIDEBAR: SCROLLING HISTORY LOG

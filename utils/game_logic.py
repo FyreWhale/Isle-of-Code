@@ -1,28 +1,34 @@
 import os
+import random
 
-def get_initial_game_state() -> dict:
+def get_initial_game_state(survivor_pool: list) -> dict:
+    """Generates the initial game state with default resources, survivors, and inventory.
+
+    Args:
+        survivor_pool (list): A list of dictionaries containing potential survivor data.
+
+    Returns:
+        dict: The initial game state dictionary.
+    """
+    if not survivor_pool:
+        survivor_pool = [{"name": "Default", "skills": {}, "trait": "A standard survivor."}]
+
+    chosen_survivors = random.sample(survivor_pool, min(2, len(survivor_pool)))
+
+    starting_roster = []
+    for s in chosen_survivors:
+        active_survivor = s.copy()
+        active_survivor["hp"] = 100
+        active_survivor["assigned_area"] = "Idle"
+        starting_roster.append(active_survivor)
+
     return {
         "day": 1,
         "resources": {
             "food": 10,
             "wood": 5
         },
-        "survivors": [
-            {
-                "name": "Alex",
-                "hp": 100,
-                "skills": {"scavenge": 5, "combat": 2},
-                "trait": "Grumpy, cynical, and complains about everything. Uses short, blunt sentences.",
-                "assigned_area": "Idle"
-            },
-            {
-                "name": "Bailey",
-                "hp": 100,
-                "skills": {"scavenge": 3, "combat": 4},
-                "trait": "Highly optimistic, naive, and easily distracted by nature. Very enthusiastic.",
-                "assigned_area": "Idle"
-            }
-        ],
+        "survivors": starting_roster,
         "inventory": []
     }
 

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Alex",
+    "skills": {"scavenge": 5, "combat": 2},
+    "trait": "Grumpy, cynical, and complains about everything. Uses short, blunt sentences."
+  },
+  {
+    "name": "Bailey",
+    "skills": {"scavenge": 3, "combat": 4},
+    "trait": "Highly optimistic, naive, and easily distracted by nature. Very enthusiastic."
+  },
+  {
+    "name": "Cameron",
+    "skills": {"scavenge": 6, "combat": 1},
+    "trait": "A highly logical and nervous accountant who calculates the statistical probability of every danger."
+  },
+  {
+    "name": "Dakota",
+    "skills": {"scavenge": 2, "combat": 6},
+    "trait": "A fearless, adrenaline-seeking thrill-rider who treats survival like an extreme sport."
+  }
+]

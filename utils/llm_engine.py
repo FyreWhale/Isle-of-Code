@@ -24,6 +24,33 @@ except Exception:
 PRIMARY_MODEL = MODEL_CONFIG.get("primary_model", DEFAULT_CONFIG["primary_model"])
 FALLBACK_MODELS = MODEL_CONFIG.get("fallbacks", DEFAULT_CONFIG["fallbacks"])
 
+def generate_intro_narrative(survivors_list: list, scenario_data: dict) -> str:
+    """Generates a dynamic Day 0 introduction based on the scenario and starting roster."""
+    fallback = "Day 0: You wash ashore on a mysterious, uncharted coast. Your survival begins now."
+    
+    if not os.getenv("GROQ_API_KEY") and not os.getenv("GEMINI_API_KEY"):
+        return fallback
+
+    survivor_names = ", ".join([s["name"] for s in survivors_list])
+    context = f"Scenario: {scenario_data.get('name', 'Unknown')} - {scenario_data.get('description', '')}\nStarting Survivors: {survivor_names}"
+
+    try:
+        response = completion(
+            model=PRIMARY_MODEL,
+            fallbacks=FALLBACK_MODELS,
+            messages=[
+                {"role": "system", "content": prompts.INTRO_PROMPT},
+                {"role": "user", "content": context}
+            ],
+            temperature=0.7,
+            max_tokens=150
+        )
+        
+        return f"Day 0: \n\n> {response['choices'][0]['message']['content'].strip()}"
+    except Exception as e:
+        print(f"Intro Error: {e}")
+        return f"Day 0: \n\n> {fallback.replace('Day 0: ', '')}"
+
 def parse_custom_action_intent(user_input: str) -> dict:
     """Parses free-form player input into a structured JSON action intent.
 

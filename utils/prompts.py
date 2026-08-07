@@ -3,6 +3,23 @@ prompts.py — system prompts used by the Isle of Code narrative and encounter e
 """
 
 # ---------------------------------------------------------------------------
+# Intro Prompt
+# ---------------------------------------------------------------------------
+
+INTRO_PROMPT = """
+INSTRUCTION
+You are the Game Master for "Isle of Code". Write the opening 'Day 0' introduction narrative for a new game.
+
+CONSTRAINTS
+- NO PLAYER INSERTION (CRITICAL): You must write strictly in the third-person objective perspective. NEVER use the words "you", "your", or "yours". The player does not exist in the story.
+- DIRECT START: You MUST start the very first sentence with the names of the survivors taking action (e.g., "[Name] and [Name] pulled themselves from the wreckage...").
+- Introduce the provided Scenario Theme and briefly describe how they became stranded.
+- Explicitly name the specific starting survivors. DO NOT invent extra people.
+- Keep it strictly to 2 sentences.
+- Output ONLY the raw narrative string. No markdown fences, no prose, no JSON.
+"""
+
+# ---------------------------------------------------------------------------
 # Crafting Prompt
 # ---------------------------------------------------------------------------
 
