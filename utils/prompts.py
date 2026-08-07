@@ -100,6 +100,7 @@ CONSTRAINTS
 - You MUST strictly follow the 'Today's Forced Event Tone' and 'Specific Topic' provided.
 - Apply hp_change (negative integer) if 'Today's Forced Event Tone' is Negative or 'Specific Topic' is deemed dangerous.
 - INJURY RULE: If hp_change is less than 0, the narrative MUST explicitly state what caused the injury.
+- RESOURCE MAPPING: You MUST map any found or looted items strictly to the 'VALID SYSTEM RESOURCES' provided in the user context. For example, if the survivor finds 'vines', output 'string'. If they find 'bamboo', output 'wood'. Do not output any resource keys that are not explicitly in the valid list.
 - Keep the narrative concise (2-3 sentences).
 - Output ONLY valid JSON matching the schema below. No markdown fences or prose.
 
@@ -130,6 +131,7 @@ CONSTRAINTS
 - Generate logical resources gained (integers 0-5) if the action succeeds.
 - Apply hp_change (negative integer) if the action is dangerous, reckless, or fails.
 - INJURY RULE: If hp_change is less than 0, the narrative MUST explicitly state what caused the injury.
+- RESOURCE MAPPING: You MUST map any found or looted items strictly to the 'VALID SYSTEM RESOURCES' provided in the user context. For example, if the survivor finds 'vines', output 'string'. If they find 'bamboo', output 'wood'. Do not output any resource keys that are not explicitly in the valid list.
 - Output ONLY valid JSON matching the schema below. No markdown fences or prose.
 
 OUTPUT

@@ -115,13 +115,14 @@ def resolve_dynamic_exploration(survivor_name: str, survivor_trait: str, area_da
         print(f"Exploration Error: {e}")
         return fallback
 
-def generate_daily_event(day: int, scenario_data: dict, living_survivors: list) -> dict:
+def generate_daily_event(day: int, scenario_data: dict, living_survivors: list, valid_resources: list) -> dict:
     """Generates a random morning event featuring the active survivors.
     
     Args:
         day (int): The current game day.
         scenario_data (dict): The JSON data representing the current scenario context.
         living_survivors (list): A list of dictionaries containing details of active survivors.
+        valid_resources (list): A list of all valid system resources.
 
     Returns:
         dict: A structured dictionary containing event_title, narrative, and camp_resource_change.
@@ -145,10 +146,16 @@ def generate_daily_event(day: int, scenario_data: dict, living_survivors: list) 
 
     specific_theme = random.choice(scenario_events[selected_tone])
 
-    # Format survivor details for the prompt context
     survivor_details = "\n".join([f"- Name: {s['name']}, Trait: {s.get('trait', 'A survivor')}" for s in living_survivors])
+    valid_res_string = ", ".join(valid_resources)
 
-    context = f"Day: {day}\nActive Survivors:\n{survivor_details}\nScenario Theme: {scenario_data.get('name', 'Island')} ({scenario_data.get('description', '')})\nToday's Forced Tone: {selected_tone}\nSpecific Topic: {specific_theme}."
+    context = (
+        f"Day: {day}\nActive Survivors:\n{survivor_details}\n"
+        f"Scenario Theme: {scenario_data.get('name', 'Island')} ({scenario_data.get('description', '')})\n"
+        f"Today's Forced Tone: {selected_tone}\n"
+        f"Specific Topic: {specific_theme}\n"
+        f"VALID SYSTEM RESOURCES: [{valid_res_string}]"
+    )
 
     try:
         response = completion(
@@ -170,7 +177,7 @@ def generate_daily_event(day: int, scenario_data: dict, living_survivors: list) 
         print(f"Event Error: {e}")
         return fallback
 
-def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: str, scenario_data: dict, living_survivors: list) -> dict:
+def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: str, scenario_data: dict, living_survivors: list, valid_resources: list) -> dict:
     """Generates a dynamic outcome based on a player's free-form custom action.
     
     Args:
@@ -179,6 +186,7 @@ def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: 
         action_text (str): The free-form text describing the player's custom action.
         scenario_data (dict): Data about the current scenario.
         living_survivors (list): A list of dictionaries containing details of all living survivors.
+        valid_resources (list): A list of all valid system resources.
 
     Returns:
         dict: A structured dictionary containing narrative, resources_gained, and hp_change.
@@ -190,6 +198,7 @@ def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: 
 
     teammates = [s['name'] for s in living_survivors if s['name'] != survivor_name]
     teammates_str = ", ".join(teammates) if teammates else "None (Alone)"
+    valid_res_string = ", ".join(valid_resources)
 
     context = (
         f"Scenario Theme: {scenario_data.get('name', 'Unknown')} - {scenario_data.get('description', '')}\n"
@@ -197,6 +206,7 @@ def resolve_custom_action(survivor_name: str, survivor_trait: str, action_text: 
         f"Personality Trait: {survivor_trait}\n"
         f"Other Teammates Present: {teammates_str}\n"
         f"Custom Action Attempted: {action_text}"
+        f"VALID SYSTEM RESOURCES: [{valid_res_string}]"
     )
 
     try:

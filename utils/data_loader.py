@@ -20,4 +20,5 @@ def get_all_game_data() -> dict:
         "areas": load_json_file(os.path.join(data_dir, 'areas.json')),
         "crafting": load_json_file(os.path.join(data_dir, 'crafting.json')),
         "survivors": load_json_file(os.path.join(data_dir, 'survivors.json')),
+        "valid_resources": load_json_file(os.path.join(data_dir, 'valid_resources.json'))
     }

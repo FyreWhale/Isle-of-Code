@@ -17,6 +17,7 @@ game_data = data_loader.get_all_game_data()
 scenario_data = game_data.get("scenarios", {}).get("lost_island", {})
 areas_data = game_data.get("areas", {})
 survivor_pool = game_data.get("survivors", [])
+valid_resources = game_data.get("valid_resources", [])
 
 # 2. Pass the loaded survivor pool into the game state generator
 if "game_state" not in st.session_state:
@@ -191,7 +192,8 @@ else:
                 outcome = llm_engine.generate_daily_event(
                     state["day"], 
                     scenario_data, 
-                    living_survivors
+                    living_survivors,
+                    valid_resources
                 )
                 
                 # Apply the generated math
@@ -300,7 +302,8 @@ else:
                                 survivor.get("trait", "A standard survivor."),
                                 custom_action_input,
                                 scenario_data,
-                                living_survivors
+                                living_survivors,
+                                valid_resources
                             )
                             
                             # Apply the generated math
@@ -373,7 +376,12 @@ else:
             st.markdown(f"**Current Inventory:** {', '.join(current_inventory) if current_inventory else 'Empty'}")
             st.divider()
 
-            item_to_craft = st.selectbox("Select item to craft:", options=list(CRAFTING_RECIPES.keys()))
+            item_to_craft = st.selectbox(
+                "Select item to craft:", 
+                options=list(CRAFTING_RECIPES.keys()),
+                key=f"crafting_dropdown_{state['day']}" 
+            )
+
             if item_to_craft:
                 cost = CRAFTING_RECIPES[item_to_craft]
                 cost_str = ", ".join([f"{amount} {res.capitalize()}" for res, amount in cost.items()])
