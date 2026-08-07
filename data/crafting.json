@@ -1,25 +1,43 @@
 {
   "Campfire": {
-    "wood": 3
+    "cost": {
+      "wood": 3
+    },
+    "effect": "Passive healing of +1 HP daily."
   },
   "Spear": {
-    "wood": 2,
-    "metal": 1
+    "cost": {
+      "wood": 2,
+      "metal": 1
+    },
+    "effect": "Reduces HP lost from events and exploration by 1."
   },
   "Sturdy Shelter": {
-    "wood": 15
+    "cost": {
+      "wood": 15
+    },
+    "effect": "Increases HP recovered when resting at camp by 5."
   },
   "Water Purifier": {
-    "wood": 3,
-    "metal": 2
+    "cost": {
+      "wood": 3,
+      "metal": 2
+    },
+    "effect": "Provides a passive +1 Water daily."
   },
   "Herbal Salve": {
-    "herbs": 5,
-    "food": 1
+    "cost": {
+      "herbs": 5,
+      "food": 1
+    },
+    "effect": "Instantly heals a survivor for 5 HP. (Consumable)"
   },
   "Distress Beacon": {
-    "wood": 10,
-    "metal": 10,
-    "food": 5
+    "cost": {
+      "wood": 10,
+      "metal": 10,
+      "food": 5
+    },
+    "effect": "Signals a rescue vessel for help to end the game."
   }
 }

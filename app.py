@@ -270,6 +270,26 @@ else:
                 if i < total_survivors - 1:
                     st.divider()
 
+        if "Herbal Salve" in state.get("inventory", []):
+            st.markdown("---")
+            st.subheader("🎒 Use Items")
+            with st.container(border=True):
+                target_name = st.selectbox(
+                    "Apply Herbal Salve to:", 
+                    [s["name"] for s in state["survivors"] if s["hp"] > 0], 
+                    key="salve_target"
+                )
+                if st.button("Heal 5 HP (Consume Salve)", use_container_width=True):
+                    # Remove it from inventory
+                    state["inventory"].remove("Herbal Salve")
+                    # Find the survivor and apply the +5 HP heal
+                    for i, s in enumerate(state["survivors"]):
+                        if s["name"] == target_name:
+                            state["survivors"][i] = game_logic.add_survivor_hp(s, 5)
+                            break
+                    st.session_state.game_state = state
+                    st.rerun()
+
     # ==========================================
     # MIDDLE COLUMN: CONTROLS & TABS
     # ==========================================
@@ -349,6 +369,11 @@ else:
                 
                 raw_hp_change = outcome.get("hp_change", 0)
                 hp_change = min(max(raw_hp_change, -10), 0)
+
+                if hp_change < 0 and "Spear" in state.get("inventory", []):
+                    hp_change = min(0, hp_change + 1)
+                    state["inventory"].remove("Spear")
+
                 if hp_change < 0:
                     for active_survivor in living_survivors:
                         for i, s in enumerate(state["survivors"]):
@@ -372,7 +397,13 @@ else:
                     
                     if area_name == "Camp (Rest)":
                         survivor.update(game_logic.full_rest_survivor(survivor))
-                        narrative_summaries.append(f"**{survivor['name']}**: \"I rested at camp and recovered some health.\" `[+20 HP]`")
+                        
+                        bonus = 0
+                        if "Sturdy Shelter" in state.get("inventory", []):
+                            survivor.update(game_logic.add_survivor_hp(survivor, 5))
+                            bonus = 5
+                            
+                        narrative_summaries.append(f"**{survivor['name']}**: \"I rested at camp and recovered some health.\" `[+{20 + bonus} HP]`")
                     
                     elif area_name in areas_data:
                         # Energy checks are gone. They just explore!
@@ -383,9 +414,15 @@ else:
                         )
                         
                         res_gained = outcome.get("resources_gained", {})
-                        hp_change = outcome.get("hp_change", 0)
-                        
                         new_resources = game_logic.add_resources(new_resources, res_gained)
+
+                        raw_hp_change = outcome.get("hp_change", 0)
+                        hp_change = min(max(raw_hp_change, -10), 0)
+
+                        if hp_change < 0 and "Spear" in state.get("inventory", []):
+                            hp_change = min(0, hp_change + 1)
+                            state["inventory"].remove("Spear")
+                        
                         if hp_change < 0:
                             survivor.update(game_logic.consume_survivor_hp(survivor, abs(hp_change)))
                             
@@ -411,6 +448,20 @@ else:
                         survivor.update(game_logic.consume_survivor_hp(survivor, 15)) # Starvation penalty
                     narrative_summaries.append(f"**⚠️ STARVATION**: There was not enough food! Everyone goes hungry and grows weaker. \n\n`[-15 HP to all]`")
 
+                camp_inventory = state.get("inventory", [])
+                
+                if "Water Purifier" in camp_inventory:
+                    new_resources["water"] = new_resources.get("water", 0) + 1
+                    narrative_summaries.append("**💧 Purifier**: The Water Purifier filtered some fresh water. \n\n`[+1 water]`")
+                
+                if "Campfire" in camp_inventory:
+                    for survivor in living_survivors:
+                        for i, s in enumerate(state["survivors"]):
+                            if s["name"] == survivor["name"]:
+                                state["survivors"][i] = game_logic.add_survivor_hp(s, 1)
+                                break
+                    narrative_summaries.append("**🔥 Campfire**: The warmth of the fire healed everyone slightly overnight. \n\n`[+1 HP to all]`")
+                
                 # --- 4. Update State & Log ---
                 state["resources"] = new_resources
                 state = game_logic.advance_day(state)
@@ -490,6 +541,20 @@ else:
                                         break
                             narrative_summaries.append(f"**⚠️ STARVATION**: There was not enough food! Everyone goes hungry and grows weaker. \n\n`[-15 HP to all]`")
 
+                        camp_inventory = state.get("inventory", [])
+                
+                        if "Water Purifier" in camp_inventory:
+                            new_resources["water"] = new_resources.get("water", 0) + 1
+                            narrative_summaries.append("**💧 Purifier**: The Water Purifier filtered some fresh water. \n\n`[+1 water]`")
+                        
+                        if "Campfire" in camp_inventory:
+                            for survivor in living_survivors:
+                                for i, s in enumerate(state["survivors"]):
+                                    if s["name"] == survivor["name"]:
+                                        state["survivors"][i] = game_logic.add_survivor_hp(s, 1)
+                                        break
+                            narrative_summaries.append("**🔥 Campfire**: The warmth of the fire healed everyone slightly overnight. \n\n`[+1 HP to all]`")
+                        
                         # --- 3. Update State & Log ---
                         state["resources"] = new_resources
                         state = game_logic.advance_day(state)
@@ -523,8 +588,13 @@ else:
             )
 
             if item_to_craft:
-                cost = CRAFTING_RECIPES[item_to_craft]
+                recipe_data = CRAFTING_RECIPES[item_to_craft]
+                cost = recipe_data.get("cost", {})
+                effect_desc = recipe_data.get("effect", "No known effect.")
+
                 cost_str = ", ".join([f"{amount} {res.capitalize()}" for res, amount in cost.items()])
+
+                st.markdown(f"**Effect:** {effect_desc}")
                 st.caption(f"**Cost:** {cost_str}")
 
                 if st.button(f"Craft {item_to_craft}", use_container_width=True):
@@ -555,7 +625,21 @@ else:
                                         break
                             narrative_summaries.append(f"**⚠️ STARVATION**: Working on an empty stomach! Everyone grows weaker. \n\n`[-15 HP to all]`")
 
-                        # 4. Update State & Advance Day
+                        camp_inventory = state.get("inventory", [])
+                
+                        if "Water Purifier" in camp_inventory:
+                            new_resources["water"] = new_resources.get("water", 0) + 1
+                            narrative_summaries.append("**💧 Purifier**: The Water Purifier filtered some fresh water. \n\n`[+1 water]`")
+                        
+                        if "Campfire" in camp_inventory:
+                            for survivor in living_survivors:
+                                for i, s in enumerate(state["survivors"]):
+                                    if s["name"] == survivor["name"]:
+                                        state["survivors"][i] = game_logic.add_survivor_hp(s, 1)
+                                        break
+                            narrative_summaries.append("**🔥 Campfire**: The warmth of the fire healed everyone slightly overnight. \n\n`[+1 HP to all]`")
+                        
+                        # --- 4. Update State & Log ---
                         state["resources"] = new_resources
                         state = game_logic.advance_day(state)
                         st.session_state.game_state = state
